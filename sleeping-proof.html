@@ -1,0 +1,1266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The Sleeping Proof</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700&display=swap">
+<style>
+/* Layout: one 4:3 game screen floating over the living canvas (grain, brain, network); controls and codex sit outside the screen */
+:root{
+  --ink:#0c0c0b;--panel:rgba(14,14,12,.72);
+  --text:#ece7dc;--text-2:rgba(236,231,220,.7);--text-3:rgba(236,231,220,.42);
+  --line:rgba(236,231,220,.16);--line-2:rgba(236,231,220,.34);--good:#a8cfa6;
+  --display:"Cormorant Garamond","Iowan Old Style",Georgia,serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Space Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+html,body{min-height:100%}
+body{background:var(--ink);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block}
+.grain{position:fixed;inset:-60%;z-index:1;pointer-events:none;opacity:.11;background-repeat:repeat;background-size:220px 220px;animation:grain .8s steps(8) infinite}
+@keyframes grain{0%{transform:translate(0,0)}12%{transform:translate(-4%,3%)}25%{transform:translate(3%,-5%)}37%{transform:translate(-6%,-2%)}50%{transform:translate(5%,4%)}62%{transform:translate(-2%,6%)}75%{transform:translate(6%,-3%)}87%{transform:translate(-5%,-6%)}100%{transform:translate(0,0)}}
+.vignette{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse at 50% 42%,transparent 35%,rgba(0,0,0,.6) 100%)}
+@media (prefers-reduced-motion:reduce){.grain{animation:none}}
+.app{position:relative;z-index:2;max-width:1000px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 28px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.top{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{display:flex;flex-direction:column}
+.brand b{font-family:var(--display);font-weight:400;font-size:26px;line-height:1}
+.brand span{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);margin-top:4px}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.tb{font:inherit;font-size:13px;color:var(--text);background:var(--panel);border:1px solid var(--line-2);border-radius:999px;padding:7px 14px;cursor:pointer}
+.tb:hover{border-color:var(--text)}
+:focus-visible{outline:1.5px solid var(--text);outline-offset:3px}
+.screen{width:min(100%,calc((100vh - 230px) * 4 / 3),960px);min-width:min(100%,320px);aspect-ratio:4/3;border:1px solid var(--line-2);border-radius:6px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.6);background:transparent}
+#game{width:100%;height:100%;display:block;touch-action:none;image-rendering:auto}
+.where{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3)}
+.pad{width:100%;max-width:520px;display:flex;justify-content:space-between;align-items:center;gap:16px;user-select:none;-webkit-user-select:none}
+.dpad{display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,52px);gap:4px}
+.dpad button,.ab button{font-family:var(--mono);font-size:16px;color:var(--text);background:var(--panel);border:1px solid var(--line-2);border-radius:12px;cursor:pointer;touch-action:none}
+.dpad button:active,.ab button:active{background:rgba(236,231,220,.16)}
+.dpad .u{grid-area:1/2}.dpad .l{grid-area:2/1}.dpad .r{grid-area:2/3}.dpad .d{grid-area:3/2}
+.ab{display:flex;gap:10px;align-items:center}
+.ab button{width:64px;height:64px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+.ab button small{font-size:9.5px;color:var(--text-3);letter-spacing:.08em}
+.credits{width:100%;max-width:960px;justify-content:center;margin-top:20px;padding-top:18px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:14px 40px}
+.credits div{display:flex;flex-direction:column;align-items:center;text-align:center;gap:3px}
+.credits b{font-family:var(--display);font-weight:400;font-size:21px;line-height:1.2}
+.credits .eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3)}
+.ab .c{width:48px;height:48px}
+@media (max-width:420px){.pad{gap:10px}.dpad{grid-template-columns:repeat(3,46px);grid-template-rows:repeat(3,46px)}.ab{gap:8px}.ab button{width:56px;height:56px}.ab .c{width:42px;height:42px}}
+@media (max-width:350px){.pad{gap:8px}.dpad{grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px)}.ab{gap:8px}.ab button{width:48px;height:48px}.ab .c{width:36px;height:36px}}
+.keys{font-family:var(--mono);font-size:11.5px;color:var(--text-3);text-align:center}
+@media (hover:hover) and (pointer:fine){.pad{display:none}}
+@media (hover:none),(pointer:coarse){.keys{display:none}}
+dialog#codex{width:min(760px,calc(100% - 32px));max-height:min(86vh,900px);background:#0e0e0c;color:var(--text);border:1px solid var(--line-2);border-radius:14px;padding:0;overflow:hidden}
+dialog#codex::backdrop{background:rgba(0,0,0,.65);backdrop-filter:blur(3px)}
+.cx-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:18px 22px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.cx-head h2{font-family:var(--display);font-weight:400;font-size:30px;margin:0}
+.cx-head span{font-family:var(--mono);font-size:11px;color:var(--text-3);letter-spacing:.08em}
+#codexBody{overflow-y:auto;max-height:calc(min(86vh,900px) - 76px);padding:8px 22px 24px}
+.cx-sec h3{font-family:var(--display);font-weight:400;font-size:24px;margin:20px 0 8px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.cx-sec h3 span{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3)}
+.cx-item{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:8px}
+.cx-item b{display:block;font-weight:600;font-size:15px;margin:2px 0 4px}
+.cx-item p{margin:0;color:var(--text-2);font-size:14px}
+.cx-tabs{display:flex;gap:6px;width:100%;margin-top:4px}
+.cx-tab{font-family:var(--mono);font-size:11px;letter-spacing:.06em;padding:6px 12px;border-radius:999px;border:1px solid var(--line-2);background:none;color:var(--text-2);cursor:pointer}
+.cx-tab[aria-selected="true"]{background:var(--text);color:#0e0e0c;border-color:var(--text)}
+.gx-tools{position:sticky;top:-8px;background:#0e0e0c;padding:12px 0 10px;z-index:1;display:flex;flex-direction:column;gap:10px}
+.gx-q{width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--line-2);background:transparent;color:var(--text);font:inherit;font-size:14px}
+.gx-q:focus{outline:none;border-color:var(--text)}
+.gx-chips{display:flex;flex-wrap:wrap;gap:6px}
+.gx-chips button{font-family:var(--mono);font-size:10.5px;padding:4px 10px;border-radius:999px;border:1px solid var(--line-2);background:none;color:var(--text-2);cursor:pointer}
+.gx-chips button[aria-pressed="true"]{background:var(--text);color:#0e0e0c;border-color:var(--text)}
+.cx-item .gx-ex{margin-top:6px;font-size:13px;color:var(--text-3);border-left:1px solid var(--line-2);padding-left:9px}
+dialog#codex[open]{display:flex;flex-direction:column}
+#codexBody{flex:1;min-height:0;max-height:none!important}
+@media (max-width:520px){.cx-head{padding:14px 16px}.cx-head h2{font-size:26px}#codexBody{padding:4px 16px 20px}}
+.cx-item.locked{opacity:.45;border-style:dashed}
+.cx-kind{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3)}
+</style>
+
+<canvas id="bg" aria-hidden="true"></canvas>
+<div class="grain" id="grain" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+
+<div class="app">
+  <header class="top">
+    <div class="brand"><b>The Sleeping Proof</b><span id="where">Title</span></div>
+    <div class="tools"><button class="tb" id="codexBtn">Codex <span style="opacity:.5;font-family:var(--mono);font-size:11px">C</span></button><button class="tb" id="muteBtn" aria-pressed="false">Sound on</button></div>
+  </header>
+  <div class="screen"><canvas id="game" width="640" height="480" aria-label="Game screen. Arrow keys move, Z confirms, X goes back, C opens the codex." tabindex="0"></canvas></div>
+  <p class="keys">Arrows or WASD move · Z / Enter talk and confirm · X / Esc back · C codex · M sound</p>
+  <section class="credits" aria-label="Credits">
+    <div><span class="eyebrow">Author &amp; project manager</span><b>Moinuddeen</b></div>
+    <div><span class="eyebrow">Made by</span><b>Claude, an AI model by Anthropic</b></div>
+  </section>
+  <div class="pad" aria-label="Touch controls">
+    <div class="dpad"><button class="u" data-k="up" aria-label="Up">▲</button><button class="l" data-k="left" aria-label="Left">◀</button><button class="r" data-k="right" aria-label="Right">▶</button><button class="d" data-k="down" aria-label="Down">▼</button></div>
+    <div class="ab"><button class="c" data-k="c" aria-label="Codex">C<small>CODEX</small></button><button data-k="b" aria-label="Back">X<small>BACK</small></button><button data-k="a" aria-label="Confirm">Z<small>ACT</small></button></div>
+  </div>
+</div>
+
+<dialog id="codex" aria-labelledby="codexTitle">
+  <div class="cx-head"><h2 id="codexTitle">Codex</h2><span id="codexCount"></span><button class="tb" id="codexClose">Close</button>
+    <div class="cx-tabs" role="tablist"><button class="cx-tab" role="tab" id="tabFound" aria-selected="true">Found</button><button class="cx-tab" role="tab" id="tabGloss" aria-selected="false">Glossary</button></div></div>
+  <div id="codexBody"></div>
+</dialog>
+
+<script>
+/* ---------- helpers ---------- */
+const $=(s,r=document)=>r.querySelector(s);
+function el(tag,attrs={},...kids){const e=document.createElement(tag);for(const k in attrs){const v=attrs[k];if(v==null||v===false)continue;if(k==='class')e.className=v;else if(k==='html')e.innerHTML=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v===true?'':v)}for(const c of kids.flat()){if(c==null||c===false)continue;e.append(c.nodeType?c:document.createTextNode(c))}return e}
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+const gcd=(a,b)=>b?gcd(b,a%b):Math.abs(a);
+const C=(n,k)=>{if(k<0||k>n)return 0;let r=1;for(let i=1;i<=k;i++)r=r*(n-k+i)/i;return Math.round(r)};
+const fact=n=>n<=1?1:n*fact(n-1);
+const frac=(p,q)=>{const g=gcd(p,q);p/=g;q/=g;return q===1?String(p):p+'/'+q};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=s=>esc(s).replace(/`([^`]+)`/g,'<span class="m">$1</span>');
+function opts(ans,cands){const out=[String(ans)],seen=new Set(out);for(const c of cands){const s=String(c);if(seen.has(s))continue;if(typeof c==='number'&&(!Number.isInteger(c)||c<0))continue;seen.add(s);out.push(s);if(out.length===4)break}let k=1;while(out.length<4&&typeof ans==='number'){const c=ans+(k%2?Math.ceil(k/2):-Math.ceil(k/2));k++;if(c>=0&&!seen.has(String(c))){seen.add(String(c));out.push(String(c))}}return out}
+
+/* ---------- sources ---------- */
+const SRC={
+  PRIN:{name:'Princeton COS 341',url:'https://www.cs.princeton.edu/courses/archive/fall05/cos341/handouts.html'},
+  HARV:{name:'Harvard CS 20',url:'https://lewis.seas.harvard.edu/pages/harvard-computer-science-20-discrete-mathematics-computer-science'},
+  CORN:{name:'Cornell CS 2800',url:'https://www.cs.cornell.edu/courses/cs2800/2017sp/'},
+  COLU:{name:'Columbia COMS 3203',url:'https://www.cs.columbia.edu/~amoretti/3203/'},
+  CAM:{name:'Cambridge Discrete Maths',url:'https://www.cl.cam.ac.uk/teaching/1617/DiscMath/DiscMathProofsNumbersSetsSlides.pdf'},
+  UIUC:{name:'Illinois CS 173',url:'https://courses.grainger.illinois.edu/cs173/fa2013/B-lecture/Lectures/'}
+};
+
+/* ---------- generated questions ---------- */
+function gcdGen(){const g=pick([2,3,4,5,6,7,8,9,12,14,15]);let x,y;do{x=rnd(4,23);y=rnd(3,x-1)}while(gcd(x,y)!==1);const a=g*x,b=g*y;
+  return{q:`What is \`gcd(${a}, ${b})\`?`,o:opts(g,[g*2,g*3,x,y,g+2,Math.max(1,g-1)]),w:`Run Euclid's algorithm until the remainder is 0. The last nonzero remainder is ${g}. Indeed ${a} = ${g}·${x} and ${b} = ${g}·${y}, with ${x} and ${y} coprime.`,s:'CAM'}}
+function modGen(){const n=rnd(3,13),a=rnd(60,999),r=a%n;return{q:`What is \`${a} mod ${n}\`?`,o:opts(r,[(r+1)%n,(r+n-1)%n,(r+2)%n,n-r]),w:`Division with remainder: ${a} = ${n} · ${Math.floor(a/n)} + ${r}, and 0 ≤ ${r} < ${n}.`,s:'CORN'}}
+function invGen(){const p=pick([7,11,13,17]),a=rnd(2,p-1);let inv=1;while((a*inv)%p!==1)inv++;const others=shuffle([...Array(p-1)].map((_,i)=>i+1).filter(v=>v!==inv));
+  return{q:`What is the multiplicative inverse of ${a} modulo ${p}?`,o:opts(inv,others),w:`${a} · ${inv} = ${a*inv} ≡ 1 (mod ${p}). Since ${p} is prime, every nonzero residue has an inverse.`,s:'CORN'}}
+function chooseGen(){const n=rnd(6,12),k=rnd(2,4),ans=C(n,k);return{q:`How many ways can you choose a committee of ${k} from ${n} people?`,o:opts(ans,[C(n,k)*fact(k),n*k,C(n,k-1),C(n+1,k)]),w:`Order does not matter, so it is C(${n}, ${k}) = ${n}! / (${k}! · ${n-k}!) = ${ans}.`,s:'HARV'}}
+function diceGen(){const s=rnd(2,12),ways=6-Math.abs(s-7),ans=frac(ways,36);const c=[];for(let t=2;t<=12;t++)c.push(frac(6-Math.abs(t-7),36));c.push(frac(s,36),'1/6','1/12','1/11');
+  return{q:`Roll two fair dice. What is the probability that the sum is ${s}?`,o:opts(ans,shuffle(c)),w:`${ways} of the 36 equally likely outcomes sum to ${s}, so the probability is ${ways}/36 = ${ans}.`,s:'CORN'}}
+
+/* ---------- fresh questions: every topic builds new ones each run ---------- */
+const M=s=>'`'+s+'`';
+function sopts(ans,cands){const out=[String(ans)],seen=new Set(out);for(const c of cands){const s=String(c);if(!seen.has(s)){seen.add(s);out.push(s)}if(out.length===4)break}return out}
+const setStr=a=>a.length?'{'+[...a].sort((x,y)=>x-y).join(', ')+'}':'∅';
+const subN=n=>String(n).replace(/\d/g,c=>'₀₁₂₃₄₅₆₇₈₉'[c]);
+const pctStr=x=>(Math.round(x*1000)/10)+'%';
+
+/* logic */
+function lgRowsGen(){const V=['p','q','r'],L=[a=>a,a=>'¬'+a];
+  const atom=()=>{const v=pick(V);return Math.random()<.3?{s:'¬'+v,f:e=>!e[v]}:{s:v,f:e=>e[v]}};
+  const ops=[['∧',(a,b)=>a&&b],['∨',(a,b)=>a||b],['→',(a,b)=>!a||b],['↔',(a,b)=>a===b],['⊕',(a,b)=>a!==b]];
+  const bin=(x,y)=>{const[o,f]=pick(ops);return{s:x.s+' '+o+' '+y.s,f:e=>f(x.f(e),y.f(e))}};
+  const par=x=>({s:'('+x.s+')',f:x.f});
+  let F,cnt;do{F=Math.random()<.5?bin(par(bin(atom(),atom())),atom()):bin(atom(),par(bin(atom(),atom())));
+    cnt=0;for(let r=0;r<8;r++){const e={p:!!(r&4),q:!!(r&2),r:!!(r&1)};if(F.f(e))cnt++}}while(new Set(F.s.match(/[pqr]/g)).size<3);
+  return{q:`In how many of the 8 rows of its truth table is ${M(F.s)} true?`,o:opts(cnt,[8-cnt,cnt+1,cnt-1,4,2,6]),w:`Evaluate the formula in each of the 2³ = 8 rows (p, q, r each T or F). It comes out true in ${cnt} of them${cnt===8?', so it is a tautology':cnt===0?', so it is a contradiction':''}.`,s:'UIUC'}}
+function lgNegGen(){const P=pick(['P(x, y)','L(x, y)','R(x, y)']),Q=pick(['Q(x, y)','S(x, y)']).replace(P[0],'T');
+  const q1=pick(['∀','∃']),q2=pick(['∀','∃']),fl=c=>c==='∀'?'∃':'∀';
+  const inner=pick([['→',`${P} → ${Q}`,`${P} ∧ ¬${Q}`,`¬${P} → ¬${Q}`],['∧',`${P} ∧ ${Q}`,`¬${P} ∨ ¬${Q}`,`¬${P} ∧ ¬${Q}`],['∨',`${P} ∨ ${Q}`,`¬${P} ∧ ¬${Q}`,`¬${P} ∨ ¬${Q}`]]);
+  const pre=`${q1}x ${q2}y`,npre=`${fl(q1)}x ${fl(q2)}y`;
+  return{q:`Which statement is the negation of ${M(pre+' ('+inner[1]+')')}?`,o:sopts(M(npre+' ('+inner[2]+')'),[M(npre+' ('+inner[3]+')'),M(pre+' ('+inner[2]+')'),M(`${fl(q1)}x ${q2}y (${inner[2]})`),M(pre+' ('+inner[3]+')')]),
+    w:`Flip every quantifier (${pre} becomes ${npre}) and negate the inside. ${inner[0]==='→'?'¬(A → B) ≡ A ∧ ¬B':inner[0]==='∧'?'¬(A ∧ B) ≡ ¬A ∨ ¬B':'¬(A ∨ B) ≡ ¬A ∧ ¬B'}.`,s:'CORN'}}
+const IMPL=[['n is divisible by 6','n is even','n is odd','n is not divisible by 6'],['a shape is a square','it has four sides','it does not have four sides','it is not a square'],['it is raining','the ground is wet','the ground is not wet','it is not raining'],['n² is odd','n is odd','n is even','n² is even'],['a graph is a tree','it has no cycles','it has a cycle','it is not a tree'],['x > 5','x > 2','x ≤ 2','x ≤ 5'],['f is a bijection','f has an inverse','f has no inverse','f is not a bijection']];
+function lgFormGen(){const[p,q,nq,np]=pick(IMPL),k=pick(['contrapositive','converse','inverse']);
+  const forms={contrapositive:`If ${nq}, then ${np}.`,converse:`If ${q}, then ${p}.`,inverse:`If ${np}, then ${nq}.`,negation:`“${p}” is true and “${q}” is false.`};
+  return{q:`Statement: “If ${p}, then ${q}.” Which is its ${k}?`,o:sopts(forms[k],Object.keys(forms).filter(x=>x!==k).map(x=>forms[x])),w:`For P → Q: the converse is Q → P, the inverse ¬P → ¬Q, the contrapositive ¬Q → ¬P. Only the contrapositive always has the same truth value as the original.`,s:'UIUC'}}
+
+/* proofs */
+const isPrime=n=>{if(n<2)return false;for(let d=2;d*d<=n;d++)if(n%d===0)return false;return true};
+function pfCounterGen(){if(Math.random()<.5){const a=rnd(5,60)*2+1;const odd=[];for(let n=a;n<a+40;n+=2)odd.push(n);const comp=odd.filter(n=>!isPrime(n)),pr=shuffle(odd.filter(isPrime));
+    const c=pick(comp);return{q:`Which number is a counterexample to “every odd number from ${a} to ${a+38} is prime”?`,o:sopts(c,pr),w:`${c} is odd and in range, but ${c} = ${(()=>{for(let d=3;;d+=2)if(c%d===0)return d+' · '+c/d})()}. The other options are primes, so they agree with the claim.`,s:'PRIN'}}
+  const [a,b]=pick([[4,6],[6,10],[6,9],[4,10],[10,15],[6,15],[12,8]]);const l=a*b/gcd(a,b),ab=a*b;
+  const good=n=>n%a===0&&n%b===0&&n%ab!==0;const c=l*pick([1,1,3].filter(k=>good(l*k)));const cand=shuffle([ab,2*ab,a*rnd(2,7),b*rnd(2,7),a+b,ab+a].filter(n=>!good(n)));
+  return{q:`Which number is a counterexample to “if n is divisible by ${a} and by ${b}, then n is divisible by ${ab}”?`,o:sopts(c,cand),w:`${c} is divisible by ${a} and by ${b}, but not by ${ab}. The claim fails because ${a} and ${b} share the factor ${gcd(a,b)}; it is true when the two numbers are coprime.`,s:'UIUC'}}
+function pfPigeonGen(){const t=rnd(0,2);
+  if(t===0){const[k,who,how,box]=pick([[7,'people','were born on the same day of the week','days of the week'],[12,'people','share a birth month','months'],[26,'words','start with the same letter','letters'],[10,'phone numbers','end in the same digit','possible last digits'],[4,'cards','have the same suit','suits']]),m=rnd(2,4),N=(m-1)*k+1;
+    return{q:`How many ${who} must you pick to guarantee that at least ${m} of them ${how}?`,o:opts(N,[N-1,m*k,m*k+1,N+k]),w:`Generalized pigeonhole: there are ${k} ${box}, so ${k} boxes; ${(m-1)*k} objects can sit ${m-1} per box. One more, ${N}, forces some box to hold ${m}.`,s:'PRIN'}}
+  const N=rnd(20,120),k=rnd(3,11),a=Math.ceil(N/k);
+  return{q:`${N} letters go into ${k} mailboxes. What is the largest number you can guarantee some mailbox receives?`,o:opts(a,[Math.floor(N/k)===a?a+1:Math.floor(N/k),a+1,a-1,N-k]),w:`At least ⌈${N}/${k}⌉ = ${a}. If every box had at most ${a-1}, there would be at most ${(a-1)*k} < ${N} letters.`,s:'PRIN'}}
+function pfMethodGen(){const C=pick([['√3 is irrational.','contradiction'],['There is no largest even number.','contradiction'],['If n² is a multiple of 3, then n is a multiple of 3.','contraposition'],['If 3n + 2 is odd, then n is odd.','contraposition'],['The sum of two odd numbers is even.','a direct proof'],['If a | b and b | c then a | c.','a direct proof'],['n³ − n is divisible by 6 for every integer n.','cases (on n mod 6, or mod 2 and mod 3)'],['|xy| = |x||y| for all real x, y.','cases (on the signs of x and y)'],['1 + 2 + 4 + ⋯ + 2ⁿ = 2ⁿ⁺¹ − 1 for all n ≥ 0.','induction']]);
+  const all=['contradiction','contraposition','a direct proof','cases (on the signs of x and y)','induction','cases (on n mod 6, or mod 2 and mod 3)'];
+  const other=shuffle(all.filter(x=>x!==C[1]&&!(x.startsWith('cases')&&C[1].startsWith('cases'))));
+  const why={contradiction:'Claims of the form “not …” or “no …” are natural for contradiction: assume the opposite and reach an impossibility.',contraposition:'The hypothesis is awkward (n² or 3n + 2), but its negation gives a concrete form for n, so prove ¬Q → ¬P.','a direct proof':'Unfold the definitions and compute; nothing needs to be assumed false.',induction:'The claim is indexed by n and the n + 1 case contains the n case.'};
+  const lab=x=>x==='a direct proof'?'Direct proof':'Proof by '+x;
+  return{q:`Which method fits best? Claim: ${C[0]}`,o:sopts(lab(C[1]),other.map(lab)),w:why[C[1]]||'The claim behaves differently in a few situations, so split into exhaustive cases and handle each.',s:'UIUC'}}
+
+/* sets */
+function stOpsGen(){const U=[1,2,3,4,5,6,7,8];let A,B;do{A=U.filter(()=>Math.random()<.45);B=U.filter(()=>Math.random()<.45)}while(A.length<2||B.length<2||A.every(x=>B.includes(x))||B.every(x=>A.includes(x))||!A.some(x=>B.includes(x)));
+  const r={'A ∩ B':A.filter(x=>B.includes(x)),'A ∪ B':[...new Set([...A,...B])],'A ∖ B':A.filter(x=>!B.includes(x)),'B ∖ A':B.filter(x=>!A.includes(x)),'A △ B':[...A.filter(x=>!B.includes(x)),...B.filter(x=>!A.includes(x))]};
+  const k=pick(['A ∩ B','A ∪ B','A ∖ B','A △ B']);
+  return{q:`A = ${setStr(A)} and B = ${setStr(B)}. What is ${M(k)}?`,o:sopts(setStr(r[k]),shuffle(Object.keys(r).filter(x=>x!==k)).map(x=>setStr(r[x]))),w:{'A ∩ B':'Intersection keeps elements in both sets.','A ∪ B':'Union keeps elements in either set.','A ∖ B':'Difference keeps elements of A that are not in B.','A △ B':'Symmetric difference keeps elements in exactly one of the two sets.'}[k]+` Answer: ${setStr(r[k])}.`,s:'UIUC'}}
+function stSizeGen(){const t=rnd(0,2);
+  if(t===0){const a=rnd(2,4),b=rnd(2,3),n=2**(a*b);return{q:`|A| = ${a} and |B| = ${b}. How many elements does ${M('P(A × B)')} have?`,o:opts(n,[2**(a+b),a*b,2**a*2**b*2,(2**a)*b]),w:`A × B has ${a}·${b} = ${a*b} ordered pairs, so its power set has 2^${a*b} = ${n} elements.`,s:'CAM'}}
+  if(t===1){const n=rnd(4,9),a=2**(n-2);return{q:`How many subsets of {1, 2, …, ${n}} contain 1 but not 2?`,o:opts(a,[2**(n-1),2**n,2**(n-2)*2+1,n-2]),w:`1 and 2 are decided; each of the other ${n-2} elements is in or out freely: 2^${n-2} = ${a}.`,s:'CAM'}}
+  const A=rnd(12,40),B=rnd(12,40),I=rnd(3,Math.min(A,B)-2),u=A+B-I;
+  return{q:`In a class, ${A} students take logic, ${B} take algebra, and ${I} take both. How many take at least one?`,o:opts(u,[A+B,u-I,A+B+I,Math.max(A,B)]),w:`|L ∪ A| = |L| + |A| − |L ∩ A| = ${A} + ${B} − ${I} = ${u}. The ${I} students in both were counted twice.`,s:'HARV'}}
+function stMemberGen(){const X=pick([['{1, {1}, {2, 3}}','{2, 3} ∈ S','{2, 3} ⊆ S','{1} ⊆ S','2 ∈ S'],['{∅, {∅}}','∅ ∈ S','{∅} ∈ S','∅ ⊆ S','{{∅}} ⊆ S'],['{a, {a, b}}','{a, b} ∈ S','{a} ⊆ S','a ∈ S','{a, {a, b}} ⊆ S'],['{1, 2, {1, 2}}','{1, 2} ∈ S','{1, 2} ⊆ S','{{1, 2}} ⊆ S','1 ∈ S']]);
+  const falses={'{1, {1}, {2, 3}}':['2 ∈ S','{2} ∈ S','{2, 3} ⊆ S','{{1}, 2} ⊆ S'],'{∅, {∅}}':['{{{∅}}} ⊆ S','{∅, {∅}} ∈ S','{{∅, {∅}}} ⊆ S','|S| = 1'],'{a, {a, b}}':['b ∈ S','{a, b} ⊆ S','{b} ∈ S','|S| = 3'],'{1, 2, {1, 2}}':['{1} ∈ S','3 ∈ S','|S| = 2','{{1}} ⊆ S']}[X[0]];
+  const ok=[X[1],X[2],X[3],X[4]].filter(s=>!falses.includes(s));const t=pick(ok);
+  return{q:`S = ${X[0]}. Which statement is true?`,o:sopts(t,shuffle(falses)),w:`∈ asks whether something is listed as an element of S; ⊆ asks whether every element of the left side is listed in S. Here ${t} holds and the others fail.`,s:'UIUC'}}
+
+/* functions & relations */
+function fnCountGen(){const t=rnd(0,3),m=rnd(2,4),n=rnd(Math.max(m,3),6);
+  if(t===0){const a=n**m;return{q:`How many functions are there from a ${m}-element set to a ${n}-element set?`,o:opts(a,[m**n,n*m,fact(n)/fact(n-m),C(n,m)]),w:`Each of the ${m} inputs independently picks one of ${n} outputs: ${n}^${m} = ${a}.`,s:'PRIN'}}
+  if(t===1){const a=fact(n)/fact(n-m);return{q:`How many injective functions are there from a ${m}-element set to a ${n}-element set?`,o:opts(a,[n**m,C(n,m),fact(n),m**n]),w:`The first input has ${n} choices, the next ${n-1}, and so on: ${n}!/(${n}−${m})! = ${a}.`,s:'PRIN'}}
+  if(t===2){const k=rnd(3,6),a=fact(k);return{q:`How many bijections are there from a ${k}-element set to itself?`,o:opts(a,[k**k,2**k,k*k,fact(k-1)]),w:`A bijection of a finite set to itself is a permutation: ${k}! = ${a}.`,s:'PRIN'}}
+  const k=rnd(3,7),a=2**k-2;return{q:`How many surjective (onto) functions are there from a ${k}-element set to {0, 1}?`,o:opts(a,[2**k,2**k-1,k,2*k]),w:`All 2^${k} functions, minus the 2 constant ones that miss a value: ${a}.`,s:'CAM'}}
+function fnPropGen(){const t=rnd(0,3);let f,cod;const D=[1,2,3,4];
+  for(;;){cod=Math.random()<.5?['a','b','c','d']:['a','b','c'];if(Math.random()<.2)cod=['a','b','c','d','e'];f=D.map(()=>pick(cod));const inj=new Set(f).size===4,sur=cod.every(c=>f.includes(c));const k=inj&&sur?0:inj?1:sur?2:3;if(k===t)break}
+  const lab=['bijective','injective but not surjective','surjective but not injective','neither injective nor surjective'];
+  const inj=new Set(f).size===4,sur=cod.every(c=>f.includes(c));
+  return{q:`f : {1, 2, 3, 4} → {${cod.join(', ')}} with ${D.map((x,i)=>x+' ↦ '+f[i]).join(', ')}. Then f is…`,o:sopts(lab[t],lab.filter((_,i)=>i!==t)),w:`${inj?'All four outputs differ, so f is injective.':'Two inputs share an output, so f is not injective.'} ${sur?'Every element of the codomain is hit, so f is surjective.':'Some element of the codomain ('+cod.find(c=>!f.includes(c))+') is never hit, so f is not surjective.'}`,s:'UIUC'}}
+function fnClassGen(){const n=rnd(3,7),m=rnd(15,40),x=rnd(1,m),cls=[];for(let i=1;i<=m;i++)if((i-x)%n===0)cls.push(i);const a=cls.length;
+  return{q:`On {1, 2, …, ${m}}, let a ~ b when a ≡ b (mod ${n}). How many elements are in the equivalence class of ${x}?`,o:opts(a,[n,Math.floor(m/n)===a?a+1:Math.floor(m/n),a-1,m-a]),w:`The class of ${x} is every number in range leaving remainder ${x%n} mod ${n}: ${cls.length>6?cls.slice(0,4).join(', ')+', …, '+cls[cls.length-1]:cls.join(', ')}. That is ${a} elements.`,s:'CORN'}}
+function fnCompGen(){const a=rnd(2,5),b=rnd(-4,6),c=rnd(2,4),d=rnd(-3,5),x=rnd(-3,5),gf=c*(a*x+b)+d,fg=a*(c*x+d)+b;const lin=(k,l)=>l===0?`${k}x`:`${k}x ${l<0?'− '+(-l):'+ '+l}`;
+  return{q:`f(x) = ${lin(a,b)} and g(x) = ${lin(c,d)}. What is ${M('(g ∘ f)('+x+')')}?`,o:sopts(gf,[fg,a*x+b,c*x+d,c*(a*x)+d,gf+c,gf-1,gf+1]),w:`Apply f first: f(${x}) = ${a*x+b}. Then g: g(${a*x+b}) = ${gf}. Composition reads right to left; ${M('(f ∘ g)('+x+')')} would be ${fg}.`,s:'CAM'}}
+
+/* induction */
+function inSumGen(){const t=rnd(0,3),n=rnd(8,30);
+  if(t===0){const a=n*(n+1)/2;return{q:`What is ${M('1 + 2 + ⋯ + '+n)}?`,o:opts(a,[n*n,n*(n-1)/2,a+n,n*(n+1)]),w:`n(n + 1)/2 with n = ${n}: ${n}·${n+1}/2 = ${a}.`,s:'PRIN'}}
+  if(t===1){const a=n*n;return{q:`What is the sum of the first ${n} odd numbers, ${M('1 + 3 + ⋯ + '+(2*n-1))}?`,o:opts(a,[n*(n+1),(n+1)**2,2*n*n,a-1]),w:`The first n odd numbers sum to n² (each new odd number 2k + 1 turns k² into (k + 1)²): ${n}² = ${a}.`,s:'UIUC'}}
+  if(t===2){const k=rnd(4,12),s=k*(k+1)*(2*k+1)/6;return{q:`What is ${M('1² + 2² + ⋯ + '+k+'²')}?`,o:opts(s,[(k*(k+1)/2)**2,k*k*k,s+k*k,k*(k+1)*(2*k+1)/3]),w:`Use n(n + 1)(2n + 1)/6 (provable by induction): ${k}·${k+1}·${2*k+1}/6 = ${s}.`,s:'UIUC'}}
+  const k=rnd(4,12),r=pick([2,3]),s=(r**(k+1)-1)/(r-1);return{q:`What is ${M('1 + '+r+' + '+r+'² + ⋯ + '+r+'^'+k)}?`,o:opts(s,[r**(k+1),r**k,s-1,r**(k+1)+1]),w:`Geometric series: (r^(n+1) − 1)/(r − 1) = (${r}^${k+1} − 1)/${r-1} = ${s}.`,s:'CAM'}}
+function inRecGen(){if(Math.random()<.5){const a0=rnd(0,3),r=rnd(2,3),d=rnd(1,4),k=rnd(4,6);let a=a0;const seq=[a];for(let i=1;i<=k;i++){a=r*a+d;seq.push(a)}
+    return{q:`a₀ = ${a0} and aₙ = ${r}aₙ₋₁ + ${d}. What is a${String(k).replace(/\d/g,c=>'₀₁₂₃₄₅₆₇₈₉'[c])}?`,o:opts(a,[seq[k-1],r*a+d,a+d,a-r]),w:`Unroll it: ${seq.join(', ')}.`,s:'UIUC'}}
+  const x=rnd(1,2),y=rnd(1,3),p=rnd(1,2),q=rnd(1,2),k=rnd(5,8);const s=[x,y];for(let i=2;i<=k;i++)s.push(p*s[i-1]+q*s[i-2]);const sub=v=>String(v).replace(/\d/g,c=>'₀₁₂₃₄₅₆₇₈₉'[c]);
+  return{q:`b₀ = ${x}, b₁ = ${y}, and bₙ = ${p===1?'':p}bₙ₋₁ + ${q===1?'':q}bₙ₋₂. What is b${sub(k)}?`,o:opts(s[k],[s[k-1],s[k]+s[k-2],s[k]-1,s[k-1]*2]),w:`Two base cases, then each term uses the two before it: ${s.join(', ')}. Proofs about such sequences use strong induction.`,s:'UIUC'}}
+function inStepGen(){const X=pick([
+  ['2ⁿ ≥ n + 1','2^(k+1) = 2·2ᵏ ≥ 2(k + 1) ≥ k + 2','Multiply the hypothesis by 2'],
+  ['1 + ⋯ + n = n(n + 1)/2','add (k + 1) to both sides of the hypothesis','Add the next term to both sides'],
+  ['n! ≥ 2ⁿ⁻¹','(k + 1)! = (k + 1)·k! ≥ 2·2ᵏ⁻¹','Multiply the hypothesis by (k + 1) ≥ 2'],
+  ['3 | n³ − n','(k + 1)³ − (k + 1) = (k³ − k) + 3(k² + k)','Rewrite the k + 1 case so the k case appears inside it']]);
+  return{q:`Inductive step for “${X[0]}”: having assumed P(k), what is the key move toward P(k + 1)?`,o:sopts(X[2],['Assume P(k + 1) and work backwards to P(k)','Check P(k + 1) numerically for a few values of k','Prove the base case again for k + 1','Use P(n) for all n, since it is what we are proving']),w:`The step must USE the hypothesis: ${X[1]}. Assuming P(k + 1) is circular, and checking values is evidence, not proof.`,s:'UIUC'}}
+
+/* number theory (adds to gcdGen, modGen, invGen) */
+function fermatGen(){const p=pick([5,7,11,13]),a=rnd(2,p-1),e=rnd(30,200),r=e%(p-1);let v=1;for(let i=0;i<r;i++)v=v*a%p;
+  return{q:`What is ${M(a+'^'+e+' mod '+p)}?`,o:opts(v,[(v+1)%p,a%p,1,(v*a)%p,p-1]),w:`${p} is prime and does not divide ${a}, so Fermat gives ${a}^${p-1} ≡ 1. ${e} = ${p-1}·${Math.floor(e/(p-1))} + ${r}, so ${a}^${e} ≡ ${a}^${r} ≡ ${v} (mod ${p}).`,s:'CAM'}}
+function phiGen(){const n=pick([12,14,15,18,20,21,24,25,26,27,28,30,32,33,35,36,40,42,45,49,50]);let c=0;for(let i=1;i<=n;i++)if(gcd(i,n)===1)c++;
+  const pf=[];let m=n;for(let d=2;d<=m;d++)if(m%d===0){pf.push(d);while(m%d===0)m/=d}
+  return{q:`What is φ(${n}), Euler’s totient of ${n}?`,o:opts(c,[n-1,n/2,c+2,c-2,pf.reduce((a,p)=>a*(p-1),1)]),w:`${n} has prime factors ${pf.join(' and ')}, so φ(${n}) = ${n}${pf.map(p=>' · (1 − 1/'+p+')').join('')} = ${c}.`,s:'CORN'}}
+function crtGen(){const[m,n]=pick([[3,5],[4,7],[5,7],[3,8],[5,9],[7,8],[4,9]]),a=rnd(0,m-1),b=rnd(0,n-1);let x=0;while(x%m!==a||x%n!==b)x++;
+  return{q:`Find the smallest x ≥ 0 with x ≡ ${a} (mod ${m}) and x ≡ ${b} (mod ${n}).`,o:opts(x,[x+m,(x+n)%(m*n),a+b,(x+m*n-1)%(m*n)]),w:`List numbers ≡ ${b} (mod ${n}) and stop at the first that is ≡ ${a} (mod ${m}): ${x}. The Chinese Remainder Theorem says it is unique mod ${m*n}.`,s:'CAM'}}
+
+/* counting (adds to chooseGen) */
+function permGen(){const n=rnd(6,12),[ev,kk]=pick([['gold, silver and bronze medals to',3],['the roles of president, vice-president, secretary and treasurer to',4],['first and second prize to',2]]);const A=fact(n)/fact(n-kk);
+  return{q:`In how many ways can you give ${ev} ${n} people? (Nobody gets two.)`,o:opts(A,[C(n,kk),n**kk,A/2,fact(n)]),w:`Order matters and there are no repeats: ${n}·${n-1}${kk>2?'·'+(n-2):''}${kk>3?'·'+(n-3):''} = ${A}. A committee would be C(${n}, ${kk}) = ${C(n,kk)}.`,s:'UIUC'}}
+function anagramGen(){const w=pick(['APPLE','BALLOON','COFFEE','KAYAK','LETTER','MAMMAL','PAPAYA','RADAR','SEESAW','TATTOO','BOOKKEEPER','ASSESS','MISSISSIPPI','BANANA','EERIE','GOOGOL']);const cnt={};for(const c of w)cnt[c]=(cnt[c]||0)+1;const rep=Object.values(cnt).filter(v=>v>1);const a=fact(w.length)/rep.reduce((p,v)=>p*fact(v),1);
+  return{q:`How many distinct arrangements of the letters of ${w} are there?`,o:opts(a,[fact(w.length),a*2,fact(w.length)/fact(Math.max(...rep)),a/2]),w:`${w.length}! / (${rep.map(v=>v+'!').join(' · ')}) = ${a}: divide out the swaps of repeated letters.`,s:'PRIN'}}
+function starsGen(){const k=rnd(5,12),n=rnd(3,5),t=Math.random()<.5,a=t?C(n+k-1,k):C(k-1,n-1);
+  return{q:t?`How many solutions does ${M(['x','y','z','w','v'].slice(0,n).join(' + ')+' = '+k)} have in nonnegative integers?`:`How many solutions does ${M(['x','y','z','w','v'].slice(0,n).join(' + ')+' = '+k)} have in positive integers (each ≥ 1)?`,
+    o:opts(a,[t?C(n+k,k):C(n+k-1,k),t?C(n+k-1,n):C(k,n),C(k,n),k**(n-1)]),w:t?`Stars and bars: ${k} stars and ${n-1} bars give C(${n+k-1}, ${n-1}) = ${a}.`:`Give each variable 1 first, leaving ${k-n} to share freely: C(${k-1}, ${n-1}) = ${a}.`,s:'PRIN'}}
+function binomGen(){const n=rnd(4,8),k=rnd(1,n-1),c=rnd(2,3),a=C(n,k)*c**(n-k);
+  return{q:`What is the coefficient of ${M('x'+(k===1?'':'^'+k))} in ${M('(x + '+c+')^'+n)}?`,o:opts(a,[C(n,k),C(n,k)*c**k,c**(n-k),a*c]),w:`Binomial theorem: C(${n}, ${k}) · ${c}^${n-k} = ${C(n,k)} · ${c**(n-k)} = ${a}.`,s:'HARV'}}
+function ieGen(){const n=rnd(60,300),[p,q]=pick([[2,3],[2,5],[3,5],[3,7],[4,6],[6,10],[5,7]]),l=p*q/gcd(p,q),a=Math.floor(n/p)+Math.floor(n/q)-Math.floor(n/l);
+  return{q:`How many integers from 1 to ${n} are divisible by ${p} or ${q}?`,o:opts(a,[Math.floor(n/p)+Math.floor(n/q),a-Math.floor(n/l),n-a,Math.floor(n/p)+Math.floor(n/q)-Math.floor(n/(p*q))]),w:`⌊${n}/${p}⌋ + ⌊${n}/${q}⌋ − ⌊${n}/${l}⌋ = ${Math.floor(n/p)} + ${Math.floor(n/q)} − ${Math.floor(n/l)} = ${a}. Numbers divisible by both are divisible by lcm(${p}, ${q}) = ${l}${l!==p*q?', not by '+p*q:''}.`,s:'PRIN'}}
+
+/* probability (adds to diceGen) */
+function coinGen(){const n=rnd(3,7),k=rnd(0,n),num=C(n,k),den=2**n;
+  return{q:`Flip ${n} fair coins. What is the probability of exactly ${k} head${k===1?'':'s'}?`,o:sopts(frac(num,den),[frac(1,n+1),frac(k||1,n),frac(num,2*den),frac(C(n,Math.max(0,k-1))||1,den),frac(1,den),frac(n,den)]),w:`C(${n}, ${k}) of the 2^${n} = ${den} equally likely sequences have exactly ${k} head${k===1?'':'s'}: ${num}/${den}${frac(num,den)!==num+'/'+den?' = '+frac(num,den):''}.`,s:'CORN'}}
+function marbleGen(){const r=rnd(2,6),b=rnd(2,6),num=r*(r-1),den=(r+b)*(r+b-1);
+  return{q:`A bag has ${r} red and ${b} blue marbles. Draw two without replacement. What is the probability both are red?`,o:sopts(frac(num,den),[frac(r*r,(r+b)**2),frac(r,r+b),frac(r-1,r+b-1),frac(2*num,den),frac(r*b,den)]),w:`(${r}/${r+b}) · (${r-1}/${r+b-1}) = ${frac(num,den)}. With replacement it would be (${r}/${r+b})² = ${frac(r*r,(r+b)**2)}.`,s:'HARV'}}
+function atLeastGen(){const n=rnd(2,4),num=6**n-5**n,den=6**n;
+  return{q:`Roll a fair die ${n} times. What is the probability of at least one 6?`,o:sopts(frac(num,den),[frac(n,6),frac(5**n,den),frac(1,6),frac(n,6**n)]),w:`Use the complement: P(no 6) = (5/6)^${n} = ${5**n}/${den}, so P(at least one) = 1 − ${5**n}/${den} = ${frac(num,den)}.`,s:'CORN'}}
+function expGen(){const t=rnd(0,2);
+  if(t===0){const n=rnd(2,9),a=n*3.5;return{q:`What is the expected sum when ${n} fair dice are rolled?`,o:sopts(String(a),[String(n*3),String(n*6),String(n*3.5+1),String(3.5)]),w:`Each die has mean 3.5, and expectation is linear: ${n} · 3.5 = ${a}.`,s:'CORN'}}
+  if(t===1){const n=rnd(10,60),p=pick([2,4,5,10]),a=n/p;return{q:`${n} independent trials each succeed with probability 1/${p}. Expected number of successes?`,o:opts(a,[n-a,p,a+1,a*2]),w:`Binomial(n, p) has mean np: ${n} · 1/${p} = ${a}. Linearity of expectation over ${n} indicators.`,s:'PRIN'}}
+  const p=pick([2,3,4,5,6,10]);return{q:`Each attempt succeeds with probability 1/${p}, independently. Expected number of attempts up to and including the first success?`,o:opts(p,[p-1,p+1,2*p,Math.max(1,p/2)]),w:`A geometric random variable with success probability q has mean 1/q = ${p}.`,s:'CORN'}}
+function bayesGen(){const prev=pick([100,200,500,1000]),sens=pick([.9,.95,.99]),fp=pick([.01,.02,.05]);const post=sens/prev/(sens/prev+fp*(1-1/prev));
+  const a=pctStr(post);return{q:`A condition affects 1 in ${prev} people. A test detects it ${sens*100}% of the time and gives false positives ${fp*100}% of the time. You test positive. Roughly what is the chance you have it?`,o:sopts(a,[pctStr(sens),pctStr(1-fp),pctStr(post*3>.99?post/3:post*3),pctStr(1/prev)]),
+    w:`Bayes: P(sick | +) = P(+ | sick)P(sick) / P(+) = ${sens}·${1/prev} / (${sens}·${1/prev} + ${fp}·${(1-1/prev).toFixed(4)}) ≈ ${a}. The rare base rate makes false positives dominate.`,s:'HARV'}}
+
+/* graphs */
+function edgesGen(){const t=rnd(0,4);
+  if(t===0){const n=rnd(5,14),a=C(n,2);return{q:`How many edges does the complete graph K${String(n).replace(/\d/g,c=>'₀₁₂₃₄₅₆₇₈₉'[c])} have?`,o:opts(a,[n*(n-1),n*n,a-n,a+n]),w:`One edge per pair of vertices: C(${n}, 2) = ${a}.`,s:'PRIN'}}
+  if(t===1){const m=rnd(2,6),n=rnd(2,6);return{q:`How many edges does the complete bipartite graph K${subN(m)},${subN(n)} have?`,o:opts(m*n,[m+n,C(m+n,2),m*n-1,2*m*n]),w:`Every one of the ${m} vertices on one side joins every one of the ${n} on the other: ${m}·${n} = ${m*n}.`,s:'PRIN'}}
+  if(t===2){const n=rnd(6,30),c=rnd(1,4),a=n-c;return{q:c===1?`A tree has ${n} vertices. How many edges does it have?`:`A forest (a graph with no cycles) has ${n} vertices and ${c} connected components. How many edges?`,o:opts(a,[n,n+1,n-1===a?n-2:n-1,2*n-2]),w:c===1?`A tree on n vertices has n − 1 = ${a} edges.`:`Each component is a tree with (its vertices − 1) edges, so the total is n − c = ${n} − ${c} = ${a}.`,s:'UIUC'}}
+  if(t===3){const k=rnd(2,5),a=k*2**(k-1);return{q:`The hypercube Q${String(k).replace(/\d/g,c=>'₀₁₂₃₄₅₆₇₈₉'[c])} has 2^${k} vertices, each of degree ${k}. How many edges?`,o:opts(a,[k*2**k,2**k,2**(k-1),a+k]),w:`Handshaking: sum of degrees = ${k}·2^${k} = ${k*2**k} = 2|E|, so |E| = ${a}.`,s:'CORN'}}
+  const v=rnd(5,20),a=3*v-6;return{q:`At most how many edges can a simple planar graph on ${v} vertices have?`,o:opts(a,[C(v,2),2*v-4,3*v,a+1]),w:`From Euler’s formula, a simple planar graph with V ≥ 3 has E ≤ 3V − 6 = ${a}.`,s:'PRIN'}}
+const graphical=d=>{d=d.slice();for(;;){d.sort((a,b)=>b-a);const k=d.shift();if(k===undefined||k===0)return d.every(x=>x===0);if(k>d.length)return false;for(let i=0;i<k;i++){d[i]--;if(d[i]<0)return false}}};
+function degGen(){let d;const bad=Math.random()<.25;do{const n=rnd(5,8);d=[...Array(n)].map(()=>rnd(1,5)).sort((a,b)=>b-a)}while(d[0]>=d.length||(bad?d.reduce((a,b)=>a+b)%2===0:!(graphical(d)&&d.reduce((a,b)=>a+b)/2>=d.length-1)));
+  const odd=d.filter(x=>x%2).length;
+  if(bad){// impossible sequence: ask the handshake question
+    return{q:`Can a graph have degree sequence (${d.join(', ')})?`,o:sopts(`No: the degrees sum to ${d.reduce((a,b)=>a+b)}, which is odd`,[`Yes, with ${d.reduce((a,b)=>a+b)} edges`,`Yes, but only if it is disconnected`,`Yes, if loops are not allowed`]),w:`Handshaking: the degree sum is 2|E|, always even. This sum is odd, so no graph has these degrees.`,s:'CORN'}}
+  const E=d.reduce((a,b)=>a+b)/2,ans=odd===0?'An Euler circuit':odd===2?'An Euler path, but no Euler circuit':'Neither';
+  return{q:`A connected graph has degree sequence (${d.join(', ')}). What does it have?`,o:sopts(ans,['An Euler circuit','An Euler path, but no Euler circuit','Neither','It depends on how the edges are drawn'].filter(x=>x!==ans)),w:`${odd} vertices have odd degree. Connected with 0 odd vertices: Euler circuit. Exactly 2: Euler path only. More: neither. (Its ${E} edges follow from handshaking. Degrees alone never settle Hamiltonicity.)`,s:'CORN'}}
+function chiGen(){const X=pick([['the cycle C','n',n=>n%2?3:2],['the complete graph K','n',n=>n],['a wheel: one hub joined to every vertex of a cycle of length ','n',n=>n%2?4:3],['a tree on','n',n=>2],['the complete bipartite graph K','m,n',()=>2]]);const n=rnd(4,9),m=rnd(2,5);
+  const kn=X[0].includes('complete graph'),name=X[1]==='m,n'?X[0]+subN(m)+','+subN(n):X[0].endsWith(' on')?X[0]+' '+n+' vertices':X[0].endsWith(' ')?X[0]+n:X[0]+subN(n);const a=X[2](n);
+  return{q:`What is the chromatic number of ${name}?`,o:opts(a,[a+1,a-1,n,2,3,4]),w:kn?`Every pair of vertices is adjacent, so all ${n} need different colours.`:{2:'It is bipartite with at least one edge, so exactly 2 colours.',3:'It contains an odd cycle, so 2 colours fail, and 3 suffice.',4:'The rim is an odd cycle needing 3 colours, and the hub touches all of them, so it needs a 4th.'}[a],s:'CORN'}}
+
+/* ---------- topics ---------- */
+const TOPICS=[
+{id:'logic',name:'Logic',blurb:'Connectives, quantifiers, and what follows from what.',src:['UIUC','CORN','CAM','PRIN'],ch:'truth',boss:'Truth table',gen:[lgRowsGen,lgNegGen,lgFormGen],qs:[
+ {q:'Which formula is logically equivalent to `p → q`?',o:['`¬p ∨ q`','`q → p`','`¬p → ¬q`','`p ∧ ¬q`'],w:'`p → q` is false only when p is true and q is false, and so is `¬p ∨ q`. `q → p` is the converse and `¬p → ¬q` is the inverse; neither is equivalent.',s:'UIUC'},
+ {q:'What is the negation of `∀x ∃y P(x, y)`?',o:['`∃x ∀y ¬P(x, y)`','`∀x ∃y ¬P(x, y)`','`∃x ∃y ¬P(x, y)`','`∀x ∀y ¬P(x, y)`'],w:'Push the negation inward. Each quantifier flips (∀ to ∃, ∃ to ∀) and the predicate is negated.',s:'CORN'},
+ {q:'What is the contrapositive of “if n² is even, then n is even”?',o:['If n is odd, then n² is odd.','If n is even, then n² is even.','If n² is odd, then n is odd.','n² is even and n is odd.'],w:'The contrapositive of `P → Q` is `¬Q → ¬P`, and it is equivalent to the original. The other options are the converse, the inverse and the negation.',s:'UIUC'},
+ {q:'The formula `(p ∧ q) → p` is a…',o:['tautology','contradiction','contingency','formula that is not well formed'],w:'Whenever `p ∧ q` is true, p is true, so the implication can never be false.',s:'CAM'},
+ {q:'By De Morgan’s law, `¬(p ∨ q)` is equivalent to',o:['`¬p ∧ ¬q`','`¬p ∨ ¬q`','`p ∧ q`','`¬p ∨ q`'],w:'“Not (p or q)” means neither holds. The dual law gives `¬(p ∧ q) ≡ ¬p ∨ ¬q`.',s:'PRIN'},
+ {q:'Over the integers, which statement is true?',o:['`∀x ∃y (x + y = 0)`','`∃y ∀x (x + y = 0)`','`∀x ∃y (xy = 1)`','`∃x ∀y (x < y)`'],w:'For each x take y = −x. Swapping the quantifiers asks for one y that cancels every x, which fails. `xy = 1` has no integer solution for x = 2, and no x is less than itself.',s:'CORN'},
+ {q:'From `p → q` and `¬q`, what may you conclude?',o:['`¬p`','`q`','`p`','Nothing follows.'],w:'Modus tollens. If p were true, q would be true. q is false, so p is false.',s:'CAM'},
+ {q:'A truth table for a formula with 5 variables has how many rows?',o:['32','10','25','16'],w:'Each variable is T or F independently: 2⁵ = 32 rows.',s:'UIUC'},
+ {q:'A proof system is called sound when…',o:['every provable formula is valid','every valid formula is provable','it proves every formula','no formula can be proved'],w:'Soundness: what you can prove is true. Completeness is the converse: everything true can be proved.',s:'CORN'},
+ {q:'Which formula is NOT equivalent to `p ↔ q`?',o:['`p ⊕ q`','`(p → q) ∧ (q → p)`','`(p ∧ q) ∨ (¬p ∧ ¬q)`','`¬p ↔ ¬q`'],w:'Exclusive or is true exactly when p and q differ, so it is the negation of `p ↔ q`.',s:'COLU'}]},
+{id:'proofs',name:'Proofs',blurb:'Direct, contrapositive, contradiction, cases, counterexample.',src:['UIUC','CAM','PRIN','COLU'],ch:'proof',proofs:['sqrt2','primes'],boss:'Build a proof',gen:[pfCounterGen,pfPigeonGen,pfMethodGen],qs:[
+ {q:'To prove `P → Q` by contraposition, you assume…',o:['`¬Q` and derive `¬P`','`P` and derive `Q`','`P ∧ ¬Q` and derive a contradiction','`Q` and derive `P`'],w:'Contraposition proves the equivalent `¬Q → ¬P` directly. The third option is proof by contradiction, and the last proves the converse.',s:'UIUC'},
+ {q:'A proof by contradiction of a statement S begins by assuming…',o:['`¬S`','`S`','the converse of S','a special case of S'],w:'Assume S is false and derive something impossible, such as `R ∧ ¬R`. Then S must be true.',s:'CAM'},
+ {q:'Which number is a counterexample to “every prime is odd”?',o:['2','9','1','15'],w:'2 is prime and even. 9 and 15 are odd but not prime, and 1 is not prime, so none of them tests the claim.',s:'PRIN'},
+ {q:'Euclid’s proof that there are infinitely many primes looks at which number?',o:['`p₁p₂⋯pₙ + 1`','`p₁ + p₂ + ⋯ + pₙ`','`pₙ²`','`2^pₙ`'],w:'Every pᵢ leaves remainder 1 when dividing this number, so its prime factors are missing from the list.',s:'CAM'},
+ {q:'To disprove a universal claim `∀x P(x)`, it is enough to…',o:['exhibit one x where P(x) fails','check many examples where P(x) holds','prove `∀x ¬P(x)`','prove the converse is false'],w:'The negation of `∀x P(x)` is `∃x ¬P(x)`, so a single counterexample settles it.',s:'UIUC'},
+ {q:'To prove “n² + n is even for every integer n” by cases, the natural cases are…',o:['n even and n odd','n prime and n composite','n > 0 and n < 0','n² even and n² odd'],w:'n² + n = n(n + 1). In each parity case one of the two consecutive factors is even.',s:'UIUC'},
+ {q:'A statement “P if and only if Q” is usually proved by…',o:['proving `P → Q` and `Q → P`','proving `P → Q` only','proving `P ∧ Q`','finding one example where both hold'],w:'A biconditional is two implications. Prove each direction.',s:'CAM'},
+ {q:'There are 13 people in a room. What is certain?',o:['At least two share a birth month.','At least two share a birthday.','Someone was born in January.','Everyone was born in a different month.'],w:'Pigeonhole principle: 13 people in 12 months forces some month to hold two.',s:'PRIN'},
+ {q:'A classic non-constructive proof shows irrational a, b exist with aᵇ rational. Which number does it consider?',o:['`√2^√2`','`π^e`','`e^(iπ)`','`√2 · √2`'],w:'If `√2^√2` is rational, take a = b = √2. If not, take a = `√2^√2` and b = √2, since `(√2^√2)^√2 = 2`. A pair exists either way, without saying which.',s:'COLU'}]},
+{id:'sets',name:'Sets',blurb:'Membership, subsets, operations, power sets, and sizes of infinity.',src:['CAM','UIUC','HARV','CORN'],ch:'venn',boss:'Shade a Venn diagram',gen:[stOpsGen,stSizeGen,stMemberGen],qs:[
+ {q:'How many elements does the power set `P({1, 2, 3})` have?',o:['8','6','3','9'],w:'Each element is in a subset or not, so an n-element set has 2ⁿ subsets: 2³ = 8.',s:'CAM'},
+ {q:'`A ∖ B` is the set of elements…',o:['in A but not in B','in B but not in A','in exactly one of A and B','in both A and B'],w:'Set difference keeps elements of A that are not in B. “Exactly one” is the symmetric difference A △ B.',s:'UIUC'},
+ {q:'Which is true for every set A?',o:['`∅ ⊆ A`','`∅ ∈ A`','`A ∈ A`','`A ⊆ ∅`'],w:'No element of ∅ can fail to be in A, so ∅ ⊆ A. Being an element is different: ∅ ∈ A holds only for some sets.',s:'UIUC'},
+ {q:'If |A| = 3 and |B| = 4, what is |A × B|?',o:['12','7','64','81'],w:'One ordered pair for each a ∈ A and b ∈ B: 3 · 4 = 12.',s:'CAM'},
+ {q:'Russell’s paradox comes from trying to form which “set”?',o:['`R = {x | x ∉ x}`','`R = {x | x ∈ x}`','`R = ∅`','`R = P(ℕ)`'],w:'If R ∈ R then R ∉ R, and if R ∉ R then R ∈ R. Unrestricted comprehension is inconsistent.',s:'CAM'},
+ {q:'For S = `{1, {1}}`, which is true?',o:['Both `{1} ∈ S` and `{1} ⊆ S`','Only `{1} ∈ S`','Only `{1} ⊆ S`','Neither'],w:'{1} is listed as an element, so {1} ∈ S. Its only element, 1, is also in S, so {1} ⊆ S.',s:'UIUC'},
+ {q:'Cantor’s diagonal argument shows that…',o:['ℝ is uncountable','ℚ is uncountable','ℕ and ℤ have different sizes','every infinite set is countable'],w:'Any list of reals misses the number whose n-th digit differs from the n-th digit of the n-th entry. The same idea shows P(ℕ) is uncountable.',s:'UIUC'},
+ {q:'Which of these sets is countable?',o:['ℚ, the rationals','ℝ, the reals','P(ℕ)','the interval (0, 1)'],w:'List fractions p/q by increasing |p| + q to enumerate ℚ. The other three are uncountable.',s:'CORN'},
+ {q:'`A ∩ (B ∪ C)` equals…',o:['`(A ∩ B) ∪ (A ∩ C)`','`(A ∪ B) ∩ (A ∪ C)`','`(A ∩ B) ∩ C`','`A ∪ (B ∩ C)`'],w:'Intersection distributes over union, like multiplication over addition.',s:'HARV'}]},
+{id:'func',name:'Functions & Relations',blurb:'Injective, surjective, bijective; equivalence relations and orders.',src:['UIUC','CORN','CAM','PRIN'],ch:'rel',boss:'Classify a relation',gen:[fnCountGen,fnPropGen,fnClassGen,fnCompGen],qs:[
+ {q:'`f : ℤ → ℤ`, `f(x) = 2x` is…',o:['injective but not surjective','surjective but not injective','bijective','neither'],w:'Different inputs give different outputs, so f is injective. Odd numbers are never hit, so it is not surjective.',s:'UIUC'},
+ {q:'`f : ℝ → ℝ`, `f(x) = x³` is…',o:['bijective','injective only','surjective only','neither'],w:'x³ is strictly increasing, so injective, and every real y has the preimage ∛y.',s:'CORN'},
+ {q:'`f : ℝ → ℝ`, `f(x) = x²` is…',o:['neither injective nor surjective','injective only','surjective only','bijective'],w:'f(−1) = f(1), so not injective. Negative numbers are never outputs, so not surjective.',s:'UIUC'},
+ {q:'A relation is an equivalence relation when it is…',o:['reflexive, symmetric and transitive','reflexive, antisymmetric and transitive','symmetric and transitive only','total and antisymmetric'],w:'Swap symmetric for antisymmetric and you get a partial order instead.',s:'CORN'},
+ {q:'Congruence mod 5 splits ℤ into how many equivalence classes?',o:['5','4','2','infinitely many'],w:'Every integer has a remainder in {0, 1, 2, 3, 4}, giving five classes.',s:'CORN'},
+ {q:'The relation ≤ on ℤ is…',o:['a partial order','an equivalence relation','symmetric','none of reflexive, symmetric, transitive'],w:'≤ is reflexive, antisymmetric and transitive. It is not symmetric: 1 ≤ 2 but not 2 ≤ 1.',s:'UIUC'},
+ {q:'How many functions are there from a 3-element set to a 2-element set?',o:['8','6','9','5'],w:'Each of the 3 inputs picks one of 2 outputs: 2³ = 8.',s:'PRIN'},
+ {q:'If `g ∘ f` is injective, which must be true?',o:['f is injective','g is injective','both are injective','neither needs to be'],w:'If f(a) = f(b) then g(f(a)) = g(f(b)), so a = b. g can collide outside the image of f.',s:'CAM'},
+ {q:'A function has a two-sided inverse exactly when it is…',o:['bijective','injective','surjective','increasing'],w:'Injective lets you undo it uniquely; surjective makes the inverse defined everywhere.',s:'CAM'}]},
+{id:'ind',name:'Induction',blurb:'Ordinary, strong and structural induction; recursive definitions.',src:['UIUC','PRIN','CORN','CAM'],ch:'proof',proofs:['sum','fta'],boss:'Build an induction proof',gen:[inSumGen,inRecGen,inStepGen],qs:[
+ {q:'Ordinary induction proves `∀n ≥ 0, P(n)` from which two facts?',o:['`P(0)` and `∀k (P(k) → P(k+1))`','`P(0)` and `P(1)`','`∀k (P(k+1) → P(k))`','`P(k)` for some large k'],w:'The base case starts the chain; the step passes truth from each k to k + 1.',s:'UIUC'},
+ {q:'In strong induction, the inductive step assumes…',o:['`P(0), …, P(k)` all hold','only `P(k)` holds','`P(k+1)` holds','`P(n)` for all n'],w:'You may use every earlier case. It proves exactly the same theorems as ordinary induction.',s:'CORN'},
+ {q:'`1 + 2 + ⋯ + n` equals…',o:['`n(n + 1)/2`','`n²`','`2ⁿ − 1`','`n(n − 1)`'],w:'Pair the first and last terms: n/2 pairs, each summing to n + 1.',s:'PRIN'},
+ {q:'`1 + 3 + 5 + ⋯ + (2n − 1)` equals…',o:['`n²`','`2n²`','`n(n + 1)`','`2ⁿ`'],w:'Adding the next odd number 2k + 1 turns k² into (k + 1)². That is the inductive step.',s:'UIUC'},
+ {q:'Which theorem is most naturally proved by strong induction?',o:['Every integer n ≥ 2 is a product of primes.','`2ⁿ > n` for all n','The first n odd numbers sum to n².','`n³ − n` is divisible by 3.'],w:'A composite n = ab splits into factors far below n − 1, so you need the hypothesis for all smaller values.',s:'CAM'},
+ {q:'Structural induction over a recursively defined set checks…',o:['the base elements, and that each constructor preserves the property','only the base elements','only the largest elements','every element one at a time'],w:'If the property holds for the starting objects and survives every way of building new ones, it holds for everything you can build.',s:'PRIN'},
+ {q:'With F₀ = 0, F₁ = 1 and Fₙ = Fₙ₋₁ + Fₙ₋₂, what is F₁₀?',o:['55','34','89','45'],w:'0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55.',s:'UIUC'},
+ {q:'A full binary tree has 7 internal nodes. How many leaves?',o:['8','7','14','6'],w:'By structural induction, a full binary tree with i internal nodes has i + 1 leaves.',s:'UIUC'},
+ {q:'The “proof” that all horses are the same colour breaks where?',o:['From n = 1 to n = 2: the two groups share no horse','The base case n = 1','From n = 99 to n = 100','Nowhere; it is valid'],w:'The step needs a horse in both groups of n. With two horses, {h₁} and {h₂} do not overlap.',s:'CORN'}]},
+{id:'num',name:'Number Theory',blurb:'Divisibility, gcd, modular arithmetic, Fermat, and RSA.',src:['CAM','CORN','UIUC'],ch:'euclid',boss:'Run Euclid’s algorithm',gen:[gcdGen,modGen,invGen,fermatGen,phiGen,crtGen],qs:[
+ {q:'Fermat’s little theorem: for a prime p not dividing a,',o:['`aᵖ⁻¹ ≡ 1 (mod p)`','`aᵖ ≡ 0 (mod p)`','`a² ≡ 1 (mod p)`','`a ≡ p (mod a)`'],w:'It drives fast modular exponentiation and the correctness proof of RSA.',s:'CAM'},
+ {q:'What is `3¹⁰⁰ mod 7`?',o:['4','3','1','6'],w:'Fermat gives 3⁶ ≡ 1 (mod 7). 100 = 6·16 + 4, so 3¹⁰⁰ ≡ 3⁴ = 81 ≡ 4.',s:'CORN'},
+ {q:'An integer a has a multiplicative inverse mod n exactly when…',o:['`gcd(a, n) = 1`','n is prime','a < n','a is odd'],w:'Bézout gives ax + ny = 1 when gcd(a, n) = 1, and x is the inverse.',s:'CORN'},
+ {q:'What is φ(10), Euler’s totient of 10?',o:['4','5','9','6'],w:'The numbers in 1..10 coprime to 10 are 1, 3, 7, 9.',s:'CORN'},
+ {q:'RSA is secure only if it is hard to…',o:['factor n = pq','add large numbers','test whether n is even','compute gcds'],w:'Whoever factors n can compute φ(n) = (p − 1)(q − 1) and then the private key. gcds are easy, thanks to Euclid.',s:'CORN'},
+ {q:'Bézout’s identity says gcd(a, b) can always be written as…',o:['`ax + by` for some integers x, y','`a + b`','`ab / lcm(a, b) + 1`','`a mod b`'],w:'The extended Euclidean algorithm finds x and y by running the division steps backwards.',s:'CAM'},
+ {q:'The Fundamental Theorem of Arithmetic says every integer n > 1…',o:['factors into primes uniquely, up to order','is prime or a square','has an even number of divisors','is a sum of two primes'],w:'Existence is strong induction; uniqueness uses Euclid’s lemma: if p | ab then p | a or p | b.',s:'CAM'},
+ {q:'In Diffie–Hellman key exchange, both parties end up sharing…',o:['`g^(ab) mod p`','`g^(a+b) mod p`','`ab mod p`','`p − 1`'],w:'Each sends gᵃ or gᵇ, and each raises what they receive to their own secret.',s:'CAM'}]},
+{id:'count',name:'Counting',blurb:'Products, permutations, combinations, pigeonhole, inclusion–exclusion.',src:['PRIN','HARV','UIUC'],ch:'count',boss:'Count it exactly',gen:[chooseGen,permGen,anagramGen,starsGen,binomGen,ieGen],qs:[
+ {q:'How many ways can you arrange the letters of BANANA?',o:['60','720','120','36'],w:'6! / (3! · 2!) = 60: divide out the swaps of the three As and the two Ns.',s:'PRIN'},
+ {q:'How many bit strings of length 8 are there?',o:['256','64','16','40320'],w:'Each position is 0 or 1 independently: 2⁸ = 256.',s:'HARV'},
+ {q:'How many ways can you pick 3 donuts from 5 kinds, repeats allowed?',o:['35','10','60','125'],w:'Stars and bars: C(3 + 5 − 1, 3) = C(7, 3) = 35.',s:'PRIN'},
+ {q:'What is the coefficient of `x²y³` in `(x + y)⁵`?',o:['10','5','20','1'],w:'Binomial theorem: C(5, 2) = 10.',s:'PRIN'},
+ {q:'Socks come in 4 colours. How many must you pull to guarantee a pair?',o:['5','4','8','2'],w:'Pigeonhole: 4 socks can all differ; the 5th must repeat a colour.',s:'PRIN'},
+ {q:'How many integers from 1 to 100 are divisible by 2 or 3?',o:['67','83','50','66'],w:'Inclusion–exclusion: 50 + 33 − 16 = 67.',s:'PRIN'},
+ {q:'The entries of row n of Pascal’s triangle sum to…',o:['`2ⁿ`','`n²`','`n!`','`C(2n, n)`'],w:'Each entry counts subsets of one size; together they count every subset of an n-set.',s:'HARV'},
+ {q:'How many derangements of 4 items leave no item in its place?',o:['9','6','12','24'],w:'D₄ = 4!(1 − 1 + 1/2 − 1/6 + 1/24) = 9.',s:'PRIN'},
+ {q:'How many ways can 5 people sit in a row?',o:['120','25','60','3125'],w:'5! = 120.',s:'UIUC'}]},
+{id:'prob',name:'Probability',blurb:'Sample spaces, conditioning, expectation, variance, tail bounds.',src:['CORN','PRIN','HARV'],ch:'prob',boss:'Compute a probability',gen:[diceGen,coinGen,marbleGen,atLeastGen,expGen,bayesGen],qs:[
+ {q:'Expected number of heads in 10 fair coin flips?',o:['5','10','2.5','It depends on the sequence'],w:'Linearity of expectation: 10 indicators with mean 1/2 each.',s:'CORN'},
+ {q:'Events A and B are independent exactly when…',o:['`P(A ∩ B) = P(A) · P(B)`','`P(A ∩ B) = 0`','`P(A) = P(B)`','`P(A ∪ B) = 1`'],w:'Disjoint events with positive probability are dependent: one happening rules out the other.',s:'CORN'},
+ {q:'Linearity of expectation, `E[X + Y] = E[X] + E[Y]`, requires…',o:['nothing: it holds even for dependent X and Y','X and Y independent','X and Y identically distributed','X and Y nonnegative'],w:'That is why it is so useful, for example to count expected fixed points of a random permutation.',s:'PRIN'},
+ {q:'X = 1 if a fair coin lands heads, else 0. What is Var(X)?',o:['1/4','1/2','1','0'],w:'Var(X) = E[X²] − E[X]² = 1/2 − 1/4 = 1/4.',s:'CORN'},
+ {q:'Bayes’ rule: P(A | B) equals…',o:['`P(B | A) P(A) / P(B)`','`P(A) P(B)`','`P(B | A)`','`P(A ∩ B) / P(A)`'],w:'From P(A ∩ B) = P(A | B) P(B) = P(B | A) P(A).',s:'HARV'},
+ {q:'How many people for a better than 50% chance two share a birthday?',o:['23','183','366','57'],w:'1 − (365·364⋯343)/365²³ ≈ 0.507. At 57 people it passes 99%.',s:'PRIN'},
+ {q:'Chebyshev’s inequality bounds `P(|X − μ| ≥ kσ)` by…',o:['`1/k²`','`1/k`','`e^(−k)`','`k²`'],w:'It needs only finite variance. Applied to a sample mean it gives the weak law of large numbers.',s:'CORN'},
+ {q:'Monty Hall: you pick a door, the host opens a goat door. P(win) if you switch?',o:['2/3','1/2','1/3','1'],w:'Your first pick is right 1/3 of the time. Switching wins the other 2/3.',s:'HARV'},
+ {q:'Markov’s inequality `P(X ≥ a) ≤ E[X]/a` applies to…',o:['nonnegative random variables','any random variable','only normal distributions','only uniform variables'],w:'Without nonnegativity, large negative values could hide a heavy upper tail.',s:'PRIN'}]},
+{id:'graph',name:'Graphs',blurb:'Degrees, Euler and Hamilton, trees, colouring, planarity, matchings.',src:['PRIN','CORN','UIUC','HARV'],ch:'color',boss:'Colour a graph',gen:[edgesGen,degGen,chiGen],qs:[
+ {q:'Handshaking theorem: the sum of all vertex degrees equals…',o:['twice the number of edges','the number of edges','the number of vertices','twice the number of vertices'],w:'Each edge adds 1 to the degree of both ends. So the number of odd-degree vertices is always even.',s:'CORN'},
+ {q:'A connected graph has an Euler circuit exactly when…',o:['every vertex has even degree','it has a Hamiltonian cycle','it has no cycles','some vertex has odd degree'],w:'Each pass through a vertex uses one edge in and one out. An Euler path allows exactly two odd vertices.',s:'CORN'},
+ {q:'How many edges does the complete graph K₆ have?',o:['15','30','6','36'],w:'C(6, 2) = 15 pairs of vertices.',s:'PRIN'},
+ {q:'A tree with n vertices has how many edges?',o:['n − 1','n','2n','n(n − 1)/2'],w:'Remove a leaf and its edge, then use induction.',s:'UIUC'},
+ {q:'What is the chromatic number of the 5-cycle C₅?',o:['3','2','5','4'],w:'Colours must alternate around a 2-coloured cycle, which is impossible with odd length.',s:'CORN'},
+ {q:'A graph is bipartite exactly when…',o:['it has no odd cycle','it has no cycle','it is connected','every vertex has even degree'],w:'Colour by distance parity from a start vertex; only an odd cycle can cause a clash.',s:'PRIN'},
+ {q:'Euler’s formula for a connected planar graph:',o:['V − E + F = 2','V + E = F','V − E = 1','E = 3V − 6'],w:'E ≤ 3V − 6 follows from it (for V ≥ 3), which shows K₅ is not planar.',s:'PRIN'},
+ {q:'Which graph is NOT planar?',o:['K₃,₃','K₄','C₁₀','any tree'],w:'K₃,₃ and K₅ are the forbidden pieces in Kuratowski’s theorem.',s:'PRIN'},
+ {q:'Hall’s theorem: bipartite G with sides X, Y has a matching covering X iff…',o:['|N(S)| ≥ |S| for every S ⊆ X','|X| = |Y|','every vertex has degree ≥ 1','G is connected'],w:'Every group of X-vertices needs at least as many neighbours as members.',s:'PRIN'},
+ {q:'Dijkstra’s shortest-path algorithm is correct when…',o:['all edge weights are nonnegative','the graph is a tree','the graph is undirected','all weights are distinct'],w:'A finalized vertex can never get a shorter path later, which fails with negative edges. Use Bellman–Ford there.',s:'PRIN'}]}
+];
+
+/* ---------- briefings: what each layer teaches before you play ---------- */
+const LESSONS={
+logic:{intro:'Logic is the grammar of every proof. You need to read a formula, know exactly when it is true, and transform it without changing its meaning.',ideas:[
+ {t:'Connectives have exact truth conditions',b:'`¬p` flips p. `p ∧ q` needs both. `p ∨ q` needs at least one. `p → q` is false only when p is T and q is F. `p ↔ q` is true when the two sides agree.',ex:'“If it rains, the ground is wet” is not broken on a dry sunny day: a false premise makes `p → q` true.'},
+ {t:'Equivalences let you rewrite',b:'De Morgan: `¬(p ∧ q) ≡ ¬p ∨ ¬q` and `¬(p ∨ q) ≡ ¬p ∧ ¬q`. Implication: `p → q ≡ ¬p ∨ q ≡ ¬q → ¬p` (the contrapositive). The converse `q → p` is NOT equivalent.',ex:'`¬(p → q) ≡ ¬(¬p ∨ q) ≡ p ∧ ¬q`. To refute an implication, find a case where the premise holds and the conclusion fails.'},
+ {t:'Quantifiers and their negations',b:'`∀x P(x)` claims every x works; `∃x P(x)` claims at least one does. Negating flips the quantifier: `¬∀x P(x) ≡ ∃x ¬P(x)`. Order matters: `∀x ∃y` lets y depend on x; `∃y ∀x` demands one y for all.',ex:'`∀x ∃y (y > x)` is true on ℤ (take y = x + 1). `∃y ∀x (y > x)` says a largest-plus-one integer exists, which is false.'},
+ {t:'Rules of inference',b:'Modus ponens: from p and `p → q`, get q. Modus tollens: from `¬q` and `p → q`, get `¬p`. Soundness means proofs only reach true conclusions; completeness means every valid formula has a proof.',ex:'“If n is divisible by 4 then n is even.” 6 is even, yet 6 is not divisible by 4. Inferring p from q is the fallacy called affirming the consequent.'}],
+ trap:'Affirming the consequent: knowing `p → q` and q tells you nothing about p.'},
+proofs:{intro:'A proof is a chain of justified steps from what you know to what you claim. Picking the right strategy is most of the work.',ideas:[
+ {t:'Direct proof',b:'To prove `P → Q`, assume P and derive Q using definitions. Unfold definitions first: “even” means n = 2k for some integer k.',ex:'If m and n are even, m = 2a and n = 2b, so m + n = 2(a + b) is even.'},
+ {t:'Contrapositive',b:'Prove `¬Q → ¬P` instead. Useful when Q is hard to use but ¬Q gives you something concrete.',ex:'“If n² is even then n is even.” Contrapositive: if n = 2k + 1 then n² = 4k² + 4k + 1 = 2(2k² + 2k) + 1 is odd.'},
+ {t:'Contradiction',b:'Assume the statement is false and derive an impossibility. Classic targets: irrationality, infinitude, non-existence.',ex:'√2 = a/b in lowest terms forces a and b both even, which contradicts lowest terms.'},
+ {t:'Cases, counterexamples, pigeonhole',b:'Split into exhaustive cases (even/odd, sign). One counterexample kills a universal claim. Pigeonhole: n + 1 objects in n boxes puts two in one box.',ex:'Among any 5 integers, two have the same remainder mod 4: 5 numbers, 4 possible remainders.'}],
+ trap:'Checking examples is never a proof of a universal claim, but one counterexample is a complete disproof.'},
+sets:{intro:'Sets are the raw material of mathematics: collections defined only by what belongs to them.',ideas:[
+ {t:'Membership vs subset',b:'`x ∈ A` says x is an element. `A ⊆ B` says every element of A is in B. Two sets are equal exactly when each is a subset of the other (extensionality).',ex:'For S = {1, {1}}: 1 ∈ S, {1} ∈ S, and {1} ⊆ S. But {{1}} ⊆ S too, while 2 ∉ S.'},
+ {t:'Operations and laws',b:'Union `∪`, intersection `∩`, difference `∖`, complement `ᶜ`, symmetric difference `△`. De Morgan for sets: `(A ∪ B)ᶜ = Aᶜ ∩ Bᶜ`. Intersection distributes over union and vice versa.',ex:'To prove A ∩ (B ∪ C) ⊆ (A ∩ B) ∪ (A ∩ C), take x on the left: x ∈ A and (x ∈ B or x ∈ C). In each case x is on the right.'},
+ {t:'Products and power sets',b:'`A × B` is all ordered pairs, size |A|·|B|. `P(A)` is all subsets, size 2^|A|.',ex:'P({a, b}) = {∅, {a}, {b}, {a, b}}: four subsets.'},
+ {t:'Sizes of infinity',b:'A set is countable if it can be listed: ℕ, ℤ, ℚ. Cantor’s diagonal argument shows ℝ and P(ℕ) cannot be listed. Russell’s paradox shows not every description defines a set.',ex:'List ℤ as 0, 1, −1, 2, −2, … so ℤ is countable, even though it looks “twice as big” as ℕ.'}],
+ trap:'∅ ⊆ A is always true; ∅ ∈ A is usually false.'},
+func:{intro:'Functions and relations describe how elements connect. Their properties decide what can be inverted, counted, or grouped.',ideas:[
+ {t:'Injective, surjective, bijective',b:'Injective: different inputs give different outputs. Surjective: every element of the codomain is hit. Bijective: both, so an inverse exists.',ex:'f(x) = 2x on ℤ is injective (2a = 2b ⇒ a = b) but misses 3, so not surjective. On ℝ it is bijective.'},
+ {t:'Composition',b:'If `g ∘ f` is injective then f is injective; if `g ∘ f` is surjective then g is surjective. Compositions of bijections are bijections.',ex:'f: {1} → {a, b}, g collapses both to one point. g ∘ f is injective yet g is not.'},
+ {t:'Relation properties',b:'Reflexive: every (a, a). Symmetric: (a, b) gives (b, a). Antisymmetric: (a, b) and (b, a) only when a = b. Transitive: (a, b) and (b, c) give (a, c).',ex:'Divides on ℕ: reflexive, antisymmetric, transitive. So it is a partial order, not an equivalence.'},
+ {t:'Equivalence relations partition',b:'Reflexive + symmetric + transitive splits the set into disjoint classes. Each class contains exactly the elements equivalent to one another.',ex:'Congruence mod 3 gives three classes: …, −3, 0, 3, … and …, −2, 1, 4, … and …, −1, 2, 5, …'}],
+ trap:'Symmetric and antisymmetric are not opposites: equality is both, and some relations are neither.'},
+ind:{intro:'Induction proves infinitely many statements with two finite checks. It is how you reason about anything defined step by step.',ideas:[
+ {t:'The template',b:'1) State P(n). 2) Base case: prove P(n₀). 3) Inductive step: assume P(k) for an arbitrary k ≥ n₀ and prove P(k + 1). 4) Conclude ∀n ≥ n₀ P(n).',ex:'2ⁿ ≥ n + 1. Base: 2⁰ = 1 ≥ 1. Step: 2^(k+1) = 2·2ᵏ ≥ 2(k + 1) ≥ k + 2.'},
+ {t:'Use the hypothesis',b:'The step must actually use P(k). Write the k + 1 case so the k case appears inside it.',ex:'1 + ⋯ + (k + 1) = [1 + ⋯ + k] + (k + 1), and the bracket is k(k + 1)/2 by hypothesis.'},
+ {t:'Strong induction',b:'Assume P(n₀), …, P(k) all hold. Needed when the k + 1 case reduces to cases much smaller than k.',ex:'Any amount ≥ 12 cents can be paid with 4s and 5s: check 12, 13, 14, 15, then n = (n − 4) + 4.'},
+ {t:'Structural induction and recursion',b:'For recursively defined objects (trees, strings, formulas): prove the property for base objects and show each constructor preserves it.',ex:'A full binary tree is a leaf or a root with two full subtrees. Leaves = internal + 1 holds for a leaf (1 = 0 + 1) and is preserved when joining two trees.'}],
+ trap:'The base case is not optional: “n = n + 1 implies n + 1 = n + 2” is a valid step for a false claim.'},
+num:{intro:'Number theory studies the integers through divisibility. It is the mathematics behind cryptography on the web.',ideas:[
+ {t:'Division and gcd',b:'For b > 0, a = qb + r with 0 ≤ r < b. Euclid: gcd(a, b) = gcd(b, a mod b), repeated until the remainder is 0.',ex:'gcd(252, 105): 252 = 2·105 + 42, 105 = 2·42 + 21, 42 = 2·21 + 0, so the gcd is 21.'},
+ {t:'Bézout and inverses',b:'gcd(a, b) = ax + by for some integers x, y (extended Euclid). So a has an inverse mod n exactly when gcd(a, n) = 1.',ex:'21 = 105 − 2·42 = 105 − 2(252 − 2·105) = 5·105 − 2·252.'},
+ {t:'Modular arithmetic',b:'a ≡ b (mod n) means n | (a − b). You can add and multiply, reducing at every step. Division needs an inverse.',ex:'7¹⁰ mod 6: 7 ≡ 1, so 7¹⁰ ≡ 1¹⁰ = 1.'},
+ {t:'Fermat, Euler, RSA',b:'Fermat: p prime, p ∤ a ⇒ `aᵖ⁻¹ ≡ 1 (mod p)`. Euler: `a^φ(n) ≡ 1` when gcd(a, n) = 1. RSA publishes n = pq and e; decrypting needs d with ed ≡ 1 mod φ(n), which needs the factors.',ex:'2¹⁰⁰ mod 11: 2¹⁰ ≡ 1, so 2¹⁰⁰ = (2¹⁰)¹⁰ ≡ 1.'}],
+ trap:'You cannot cancel freely mod n: 2·3 ≡ 2·0 (mod 6) but 3 ≢ 0.'},
+count:{intro:'Counting turns “how many?” into structure: decide whether order matters and whether repeats are allowed, then pick the matching formula.',ideas:[
+ {t:'Product and sum rules',b:'Independent stages multiply; disjoint alternatives add. Sequences of length k from n symbols: nᵏ.',ex:'License plates with 3 letters then 3 digits: 26³ · 10³.'},
+ {t:'Permutations and combinations',b:'Ordered, no repeats: n!/(n − k)!. Unordered, no repeats: C(n, k) = n!/(k!(n − k)!). Repeated letters: divide by the factorial of each repeat.',ex:'Arrangements of MISSISSIPPI: 11!/(4!·4!·2!) = 34650.'},
+ {t:'Stars and bars',b:'Choosing k items from n kinds with repetition, or k identical balls into n boxes: C(n + k − 1, k).',ex:'Solutions to x + y + z = 10 in nonnegative integers: C(12, 2) = 66.'},
+ {t:'Inclusion–exclusion and pigeonhole',b:'|A ∪ B| = |A| + |B| − |A ∩ B|, alternating for more sets. Pigeonhole: n items in k boxes puts at least ⌈n/k⌉ in some box.',ex:'Derangements of n: n! Σ (−1)ⁱ/i!. For n = 4 that is 24 − 24 + 12 − 4 + 1 = 9.'}],
+ trap:'Ask “does order matter?” before every count. Committees: no. Passwords: yes.'},
+prob:{intro:'Discrete probability is counting with weights. Expectation and a few inequalities answer most questions you will meet.',ideas:[
+ {t:'Sample spaces',b:'With equally likely outcomes, P(E) = |E|/|Ω|. P(Eᶜ) = 1 − P(E) is often the easier route.',ex:'P(at least one 6 in 4 rolls) = 1 − (5/6)⁴ ≈ 0.518.'},
+ {t:'Conditioning and independence',b:'P(A | B) = P(A ∩ B)/P(B). Bayes flips the condition. Independent means P(A ∩ B) = P(A)P(B).',ex:'A test is 99% accurate for a 1-in-1000 disease. A positive result means only about 9% chance of disease: the false positives dominate.'},
+ {t:'Expectation is linear',b:'E[X + Y] = E[X] + E[Y] always, independent or not. Write a count as a sum of indicator variables.',ex:'Expected fixed points of a random permutation: n indicators, each with probability 1/n, total 1.'},
+ {t:'Variance and tail bounds',b:'Var(X) = E[X²] − E[X]². Markov: P(X ≥ a) ≤ E[X]/a for X ≥ 0. Chebyshev: P(|X − μ| ≥ kσ) ≤ 1/k².',ex:'If average quiz time is 10 minutes, at most 1/3 of students take 30 minutes or more (Markov).'}],
+ trap:'Disjoint is not independent. Two disjoint events with positive probability are always dependent.'},
+graph:{intro:'Graphs model networks: vertices joined by edges. A handful of theorems answers questions about routes, colourings and matchings.',ideas:[
+ {t:'Degrees',b:'Handshaking: Σ deg(v) = 2|E|. So every graph has an even number of odd-degree vertices.',ex:'Can 7 people each shake hands with exactly 3 others? 7·3 = 21 is odd, so no.'},
+ {t:'Walks that cover everything',b:'Euler circuit (every edge once): connected and every degree even. Hamiltonian cycle (every vertex once): no simple test is known; it is NP-complete.',ex:'The Königsberg bridges have four odd-degree land masses, so no walk crosses each bridge exactly once.'},
+ {t:'Trees and colouring',b:'A tree on n vertices has n − 1 edges and a unique path between any two vertices. χ(G) is the fewest colours with no edge monochromatic. Bipartite ⇔ χ ≤ 2 ⇔ no odd cycle.',ex:'Exam scheduling: courses are vertices, shared students are edges, colours are time slots.'},
+ {t:'Planarity, matchings, paths',b:'Planar connected graphs satisfy V − E + F = 2, hence E ≤ 3V − 6. Hall: X can be matched iff every S ⊆ X has |N(S)| ≥ |S|. Dijkstra finds shortest paths with nonnegative weights.',ex:'K₅ has V = 5, E = 10 > 3·5 − 6 = 9, so it is not planar.'}],
+ trap:'Euler is about edges, Hamilton about vertices. The easy test only exists for Euler.'}
+};
+
+/* ---------- glossary: every term and principle, by category ---------- */
+const GLOSSARY={
+logic:[
+ {t:'Proposition',d:'A statement that is either true or false, never both.',ex:'“7 is prime” (true); “2 + 2 = 5” (false). “Close the door” is not a proposition.'},
+ {t:'Negation ¬p',d:'True exactly when p is false.'},
+ {t:'Conjunction p ∧ q',d:'True only when both p and q are true.'},
+ {t:'Disjunction p ∨ q',d:'True when at least one of p, q is true (inclusive or).'},
+ {t:'Exclusive or p ⊕ q',d:'True when exactly one of p, q is true; the negation of p ↔ q.'},
+ {t:'Implication p → q',d:'False only when p is true and q is false. Equivalent to ¬p ∨ q. p is the hypothesis, q the conclusion.',ex:'A false hypothesis makes the implication (vacuously) true.'},
+ {t:'Converse, inverse, contrapositive',d:'For p → q: converse q → p; inverse ¬p → ¬q; contrapositive ¬q → ¬p. Only the contrapositive is equivalent to the original.'},
+ {t:'Biconditional p ↔ q',d:'True when p and q have the same truth value; equivalent to (p → q) ∧ (q → p).'},
+ {t:'Truth table',d:'Lists a formula’s value for every assignment of its variables; n variables give 2ⁿ rows.'},
+ {t:'Tautology, contradiction, contingency',d:'Always true; always false; sometimes true and sometimes false.',ex:'p ∨ ¬p is a tautology; p ∧ ¬p is a contradiction.'},
+ {t:'Satisfiable',d:'True under at least one assignment of truth values.'},
+ {t:'Logical equivalence A ≡ B',d:'A and B have the same truth value in every row; equivalently A ↔ B is a tautology.'},
+ {t:'De Morgan’s laws',d:'¬(p ∧ q) ≡ ¬p ∨ ¬q and ¬(p ∨ q) ≡ ¬p ∧ ¬q.'},
+ {t:'Distributive laws',d:'p ∧ (q ∨ r) ≡ (p ∧ q) ∨ (p ∧ r) and p ∨ (q ∧ r) ≡ (p ∨ q) ∧ (p ∨ r).'},
+ {t:'Predicate',d:'A statement with variables, such as P(x): “x > 3”, which becomes a proposition once the variables are fixed or quantified.'},
+ {t:'Universal quantifier ∀',d:'∀x P(x): P holds for every x in the domain. Proved with an arbitrary element; refuted by one counterexample.'},
+ {t:'Existential quantifier ∃',d:'∃x P(x): P holds for at least one x in the domain. Proved by exhibiting a witness.'},
+ {t:'Quantifier negation',d:'¬∀x P(x) ≡ ∃x ¬P(x) and ¬∃x P(x) ≡ ∀x ¬P(x).'},
+ {t:'Order of quantifiers',d:'∀x ∃y lets y depend on x; ∃y ∀x needs one y that works for all x. Swapping them can change the truth value.'},
+ {t:'Domain of discourse',d:'The set the variables range over. The same formula can be true over ℝ and false over ℚ.',ex:'∃x (x² = 2)'},
+ {t:'Vacuous truth',d:'A universal statement about an empty collection is true, because no element can fail it.'},
+ {t:'Modus ponens',d:'From p and p → q, conclude q.'},
+ {t:'Modus tollens',d:'From ¬q and p → q, conclude ¬p.'},
+ {t:'Affirming the consequent (fallacy)',d:'Concluding p from p → q and q. Invalid: q may be true for other reasons.'},
+ {t:'Soundness and completeness',d:'Sound: every provable formula is valid. Complete: every valid formula is provable. Propositional and first-order logic have proof systems that are both.'}
+],
+proofs:[
+ {t:'Theorem, lemma, corollary',d:'A theorem is a proved statement; a lemma is a helper result; a corollary follows quickly from a theorem.'},
+ {t:'Conjecture',d:'A statement believed true but not yet proved.',ex:'Goldbach’s conjecture.'},
+ {t:'Axiom',d:'A statement accepted without proof as a starting point.'},
+ {t:'Direct proof',d:'Assume the hypothesis, use definitions and known results, reach the conclusion.'},
+ {t:'Proof by contraposition',d:'Prove p → q by proving ¬q → ¬p directly.'},
+ {t:'Proof by contradiction',d:'Assume the statement is false and derive an impossibility, so the statement must be true.',ex:'√2 is irrational; there are infinitely many primes.'},
+ {t:'Proof by cases',d:'Split into exhaustive cases and prove the claim in each.'},
+ {t:'Without loss of generality (WLOG)',d:'Handle one of several symmetric cases, because the others follow by the same argument.'},
+ {t:'Counterexample',d:'One instance where a universal claim fails; it fully disproves the claim.'},
+ {t:'Existence proof',d:'Shows something exists. Constructive proofs exhibit it; non-constructive proofs show it must exist without naming it.'},
+ {t:'Uniqueness proof',d:'Show existence, then show any two objects with the property are equal.'},
+ {t:'If and only if (iff)',d:'Prove both directions: p → q and q → p.'},
+ {t:'Pigeonhole principle',d:'Putting n + 1 objects into n boxes puts at least two in one box. Generalized: N objects in k boxes put at least ⌈N/k⌉ in some box.'},
+ {t:'Even, odd, divides',d:'n is even if n = 2k, odd if n = 2k + 1, and a | b if b = ak, for some integer k.'},
+ {t:'Rational and irrational',d:'A rational number is p/q with integers p, q and q ≠ 0; anything real that is not rational is irrational.'},
+ {t:'Evidence is not proof',d:'Checking many cases never proves a universal claim.',ex:'Pólya’s conjecture first fails at 906,150,257.'}
+],
+sets:[
+ {t:'Set',d:'An unordered collection of distinct objects, its elements.'},
+ {t:'Element x ∈ A',d:'x is a member of A; x ∉ A means it is not.'},
+ {t:'Set-builder notation',d:'{x | P(x)}: all x satisfying P.'},
+ {t:'Empty set ∅',d:'The set with no elements. It is a subset of every set.'},
+ {t:'Subset A ⊆ B',d:'Every element of A is in B. A proper subset A ⊊ B also misses something in B.'},
+ {t:'Set equality',d:'A = B exactly when A ⊆ B and B ⊆ A (extensionality).'},
+ {t:'Cardinality |A|',d:'The number of elements of A, or for infinite sets, its size measured by bijections.'},
+ {t:'Union, intersection',d:'A ∪ B: in A or B. A ∩ B: in both.'},
+ {t:'Difference, complement',d:'A ∖ B: in A but not B. Aᶜ: in the universe U but not in A.'},
+ {t:'Symmetric difference A △ B',d:'Elements in exactly one of A and B: (A ∖ B) ∪ (B ∖ A).'},
+ {t:'Disjoint',d:'A ∩ B = ∅.'},
+ {t:'Power set P(A)',d:'The set of all subsets of A; |P(A)| = 2^|A|.'},
+ {t:'Cartesian product A × B',d:'All ordered pairs (a, b) with a ∈ A, b ∈ B; |A × B| = |A|·|B|.'},
+ {t:'Partition',d:'A collection of nonempty, pairwise disjoint subsets whose union is the whole set.'},
+ {t:'Set identities',d:'De Morgan: (A ∪ B)ᶜ = Aᶜ ∩ Bᶜ. Distributive: A ∩ (B ∪ C) = (A ∩ B) ∪ (A ∩ C).'},
+ {t:'Countable',d:'Finite, or in bijection with ℕ (it can be listed). ℤ and ℚ are countable.'},
+ {t:'Uncountable',d:'Infinite but not countable. ℝ and P(ℕ) are uncountable.'},
+ {t:'Cantor’s diagonal argument',d:'Any list of infinite sequences misses the sequence that differs from the n-th entry in the n-th place.'},
+ {t:'Cantor’s theorem',d:'|P(A)| > |A| for every set A, so there is no largest infinity.'},
+ {t:'Russell’s paradox',d:'The “set” {x | x ∉ x} contains itself iff it does not. Axiomatic set theory forbids such unrestricted definitions.'}
+],
+func:[
+ {t:'Function f : A → B',d:'Assigns each element of the domain A exactly one element of the codomain B.'},
+ {t:'Image and range',d:'f(x) is the image of x; the range f(A) is the set of all images.'},
+ {t:'Preimage f⁻¹(S)',d:'All inputs whose image lies in S. Defined for every function.'},
+ {t:'Injective (one-to-one)',d:'f(a) = f(b) implies a = b.'},
+ {t:'Surjective (onto)',d:'Every element of the codomain is the image of some input.'},
+ {t:'Bijective',d:'Both injective and surjective; exactly the functions with a two-sided inverse.'},
+ {t:'Composition g ∘ f',d:'(g ∘ f)(x) = g(f(x)). If g ∘ f is injective, f is; if g ∘ f is surjective, g is.'},
+ {t:'Inverse function f⁻¹',d:'Undoes f: f⁻¹(f(x)) = x and f(f⁻¹(y)) = y. Exists exactly when f is bijective.'},
+ {t:'Counting functions',d:'From an m-set to an n-set: nᵐ functions, n!/(n − m)! injective ones.'},
+ {t:'Relation',d:'A subset R of A × B; for a relation on A, a subset of A × A.'},
+ {t:'Reflexive',d:'(a, a) ∈ R for every a.'},
+ {t:'Symmetric',d:'(a, b) ∈ R implies (b, a) ∈ R.'},
+ {t:'Antisymmetric',d:'(a, b) and (b, a) in R imply a = b.'},
+ {t:'Transitive',d:'(a, b) and (b, c) in R imply (a, c) ∈ R.'},
+ {t:'Equivalence relation',d:'Reflexive, symmetric and transitive.',ex:'Congruence mod n.'},
+ {t:'Equivalence class [a]',d:'All elements related to a. The classes partition the set.'},
+ {t:'Partial order',d:'Reflexive, antisymmetric and transitive.',ex:'⊆ on sets; divides on positive integers.'},
+ {t:'Total order',d:'A partial order where every two elements are comparable.',ex:'≤ on ℝ.'},
+ {t:'Hasse diagram',d:'A drawing of a partial order showing only covering pairs, with larger elements higher.'},
+ {t:'Pigeonhole and functions',d:'A function from a larger finite set to a smaller one cannot be injective.'}
+],
+ind:[
+ {t:'Principle of induction',d:'If P(n₀) holds and P(k) → P(k + 1) for all k ≥ n₀, then P(n) holds for all n ≥ n₀.'},
+ {t:'Base case',d:'The first case P(n₀), checked directly.'},
+ {t:'Inductive hypothesis',d:'The assumption that P(k) holds for an arbitrary k ≥ n₀.'},
+ {t:'Inductive step',d:'Using the hypothesis to prove P(k + 1).'},
+ {t:'Strong induction',d:'Assume P(n₀), …, P(k) all hold and prove P(k + 1). Equivalent in power to ordinary induction.',ex:'Every n ≥ 2 is a product of primes.'},
+ {t:'Well-ordering principle',d:'Every nonempty set of natural numbers has a least element; equivalent to induction.'},
+ {t:'Recursive definition',d:'Defines objects from base cases and rules that build new ones from old.',ex:'F₀ = 0, F₁ = 1, Fₙ = Fₙ₋₁ + Fₙ₋₂.'},
+ {t:'Structural induction',d:'Prove a property for the base objects of a recursive definition and show each construction rule preserves it.'},
+ {t:'Recurrence relation',d:'An equation defining a sequence from earlier terms, such as aₙ = 2aₙ₋₁ + 1.'},
+ {t:'Closed form',d:'A direct formula for the n-th term, often found by guessing and proved by induction.',ex:'aₙ = 2ⁿ − 1 solves aₙ = 2aₙ₋₁ + 1, a₀ = 0.'},
+ {t:'Sum of the first n integers',d:'1 + 2 + ⋯ + n = n(n + 1)/2.'},
+ {t:'Sum of the first n odd numbers',d:'1 + 3 + ⋯ + (2n − 1) = n².'},
+ {t:'Geometric series',d:'1 + r + ⋯ + rⁿ = (rⁿ⁺¹ − 1)/(r − 1) for r ≠ 1.'},
+ {t:'Full binary tree',d:'Every internal node has exactly two children; it has one more leaf than internal nodes.'},
+ {t:'Faulty induction',d:'A step that fails for some k (like n = 1 → 2 in the “all horses are one colour” proof) breaks the whole chain.'}
+],
+num:[
+ {t:'Divisibility a | b',d:'b = ak for some integer k.'},
+ {t:'Division algorithm',d:'For b > 0, every a can be written uniquely as a = qb + r with 0 ≤ r < b.'},
+ {t:'Prime and composite',d:'A prime has exactly two positive divisors, 1 and itself. A composite n > 1 is not prime.'},
+ {t:'Fundamental Theorem of Arithmetic',d:'Every integer n > 1 is a product of primes, uniquely up to order.'},
+ {t:'Infinitely many primes',d:'Euclid: for any finite list of primes, p₁⋯pₙ + 1 has a prime factor not on the list.'},
+ {t:'gcd and lcm',d:'gcd(a, b) is the largest common divisor; lcm(a, b) the smallest positive common multiple; gcd·lcm = ab for positive a, b.'},
+ {t:'Euclid’s algorithm',d:'gcd(a, b) = gcd(b, a mod b), repeated until the remainder is 0.'},
+ {t:'Bézout’s identity',d:'gcd(a, b) = ax + by for some integers x, y, found by the extended Euclidean algorithm.'},
+ {t:'Coprime',d:'gcd(a, b) = 1.'},
+ {t:'Euclid’s lemma',d:'If a prime p divides ab, then p divides a or p divides b.'},
+ {t:'Congruence a ≡ b (mod n)',d:'n divides a − b. Congruences can be added and multiplied.'},
+ {t:'Modular inverse',d:'a⁻¹ mod n satisfies a·a⁻¹ ≡ 1; it exists exactly when gcd(a, n) = 1.'},
+ {t:'Euler’s totient φ(n)',d:'The number of integers in 1..n coprime to n. φ(p) = p − 1 for prime p; φ(pq) = (p − 1)(q − 1).'},
+ {t:'Fermat’s little theorem',d:'If p is prime and p ∤ a, then aᵖ⁻¹ ≡ 1 (mod p).'},
+ {t:'Euler’s theorem',d:'If gcd(a, n) = 1, then a^φ(n) ≡ 1 (mod n).'},
+ {t:'Fast modular exponentiation',d:'Compute large powers by repeated squaring, reducing mod n at each step.'},
+ {t:'RSA',d:'Public key (n = pq, e); private d with ed ≡ 1 (mod φ(n)). Encrypt c = mᵉ mod n, decrypt m = cᵈ mod n. Security rests on factoring being hard.'},
+ {t:'Diffie–Hellman',d:'Two parties exchange gᵃ and gᵇ mod p and both compute the shared secret gᵃᵇ mod p.'}
+],
+count:[
+ {t:'Product rule',d:'A task done in stages with n₁, n₂, … independent choices can be done n₁·n₂·⋯ ways.'},
+ {t:'Sum rule',d:'If a task can be done in one of several disjoint ways, add the counts.'},
+ {t:'Permutation',d:'An ordered arrangement. n! arrangements of n objects; P(n, k) = n!/(n − k)! ordered selections of k.'},
+ {t:'Combination C(n, k)',d:'An unordered selection of k from n: n!/(k!(n − k)!).'},
+ {t:'Words with repeated letters',d:'n!/(n₁!n₂!⋯) where nᵢ are the repeat counts.',ex:'BANANA: 6!/(3!·2!) = 60.'},
+ {t:'Stars and bars',d:'Choosing k items from n kinds with repetition, or k identical balls into n boxes: C(n + k − 1, k).'},
+ {t:'Binomial theorem',d:'(x + y)ⁿ = Σₖ C(n, k) xᵏ yⁿ⁻ᵏ.'},
+ {t:'Pascal’s rule',d:'C(n, k) = C(n − 1, k − 1) + C(n − 1, k).'},
+ {t:'Symmetry',d:'C(n, k) = C(n, n − k).'},
+ {t:'Row sum',d:'Σₖ C(n, k) = 2ⁿ, the number of subsets of an n-set.'},
+ {t:'Combinatorial proof',d:'Prove an identity by counting the same set in two ways.'},
+ {t:'Inclusion–exclusion',d:'|A ∪ B| = |A| + |B| − |A ∩ B|; for more sets, alternate adding and subtracting intersections.'},
+ {t:'Derangement',d:'A permutation with no fixed points. Dₙ = n! Σ (−1)ⁱ/i!; D₄ = 9.'},
+ {t:'Pigeonhole principle',d:'N objects in k boxes force some box to hold at least ⌈N/k⌉.'},
+ {t:'Bijection principle',d:'If two finite sets are in bijection, they have the same size.'},
+ {t:'Division rule',d:'If every outcome is counted exactly d times, divide the count by d.'}
+],
+prob:[
+ {t:'Sample space Ω',d:'The set of all possible outcomes of an experiment.'},
+ {t:'Event',d:'A subset of the sample space.'},
+ {t:'Uniform probability',d:'With equally likely outcomes, P(E) = |E|/|Ω|.'},
+ {t:'Complement rule',d:'P(Eᶜ) = 1 − P(E).'},
+ {t:'Union rule',d:'P(A ∪ B) = P(A) + P(B) − P(A ∩ B).'},
+ {t:'Conditional probability',d:'P(A | B) = P(A ∩ B)/P(B): the probability of A once B is known to have happened.'},
+ {t:'Independence',d:'P(A ∩ B) = P(A)P(B). Disjoint events with positive probability are not independent.'},
+ {t:'Law of total probability',d:'P(A) = Σ P(A | Bᵢ)P(Bᵢ) over a partition B₁, B₂, …'},
+ {t:'Bayes’ rule',d:'P(A | B) = P(B | A)P(A)/P(B). Base rates matter.'},
+ {t:'Random variable',d:'A function assigning a number to each outcome.'},
+ {t:'Expected value E[X]',d:'Σ x·P(X = x): the long-run average.'},
+ {t:'Linearity of expectation',d:'E[X + Y] = E[X] + E[Y] and E[cX] = cE[X], with no independence needed.'},
+ {t:'Indicator variable',d:'1 if an event happens, else 0; its expectation is the event’s probability.'},
+ {t:'Variance',d:'Var(X) = E[(X − μ)²] = E[X²] − E[X]². Standard deviation σ = √Var(X).'},
+ {t:'Bernoulli and binomial',d:'Bernoulli(p): one trial. Binomial(n, p): successes in n independent trials; P(k) = C(n, k)pᵏ(1 − p)ⁿ⁻ᵏ, mean np.'},
+ {t:'Geometric distribution',d:'Trials until the first success; mean 1/p.'},
+ {t:'Markov’s inequality',d:'For X ≥ 0 and a > 0, P(X ≥ a) ≤ E[X]/a.'},
+ {t:'Chebyshev’s inequality',d:'P(|X − μ| ≥ kσ) ≤ 1/k².'},
+ {t:'Law of large numbers',d:'The average of many independent trials approaches the expected value.'},
+ {t:'Gambler’s fallacy',d:'Believing independent trials “even out”. A fair coin has no memory.'}
+],
+graph:[
+ {t:'Graph G = (V, E)',d:'Vertices joined by edges. Simple graphs have no loops or repeated edges.'},
+ {t:'Degree',d:'The number of edges at a vertex.'},
+ {t:'Handshaking theorem',d:'Σ deg(v) = 2|E|, so the number of odd-degree vertices is even.'},
+ {t:'Walk, path, cycle',d:'A walk follows edges; a path repeats no vertex; a cycle is a closed path.'},
+ {t:'Connected',d:'Every two vertices are joined by a path.'},
+ {t:'Complete graph Kₙ',d:'Every pair of n vertices is adjacent; it has C(n, 2) edges.'},
+ {t:'Bipartite graph',d:'Vertices split into two sides with every edge crossing between them; holds exactly when there is no odd cycle.'},
+ {t:'Isomorphism',d:'A bijection between vertex sets that preserves adjacency.'},
+ {t:'Euler circuit and path',d:'Use every edge exactly once. A connected graph has an Euler circuit iff every degree is even, and an Euler path iff 0 or 2 vertices have odd degree.'},
+ {t:'Hamiltonian cycle',d:'Visits every vertex exactly once. Deciding whether one exists is NP-complete.'},
+ {t:'Tree',d:'A connected graph with no cycles; with n vertices it has n − 1 edges and a unique path between any two vertices.'},
+ {t:'Spanning tree',d:'A tree using all vertices and some edges of a connected graph.'},
+ {t:'Minimum spanning tree',d:'A spanning tree of least total weight, found greedily by Kruskal’s or Prim’s algorithm.'},
+ {t:'Shortest paths',d:'Dijkstra’s algorithm works with nonnegative weights; Bellman–Ford handles negative edges as long as there is no negative cycle.'},
+ {t:'Colouring and χ(G)',d:'Colour vertices so adjacent ones differ; χ(G) is the fewest colours. Greedy uses at most Δ + 1.'},
+ {t:'Planar graph',d:'Can be drawn without crossing edges. Connected planar graphs satisfy V − E + F = 2, hence E ≤ 3V − 6 for V ≥ 3.'},
+ {t:'Kuratowski’s theorem',d:'A graph is planar iff it contains no subdivision of K₅ or K₃,₃.'},
+ {t:'Four Colour Theorem',d:'Every planar graph can be coloured with 4 colours.'},
+ {t:'Matching',d:'A set of edges with no shared endpoints.'},
+ {t:'Hall’s theorem',d:'A bipartite graph has a matching covering side X iff |N(S)| ≥ |S| for every S ⊆ X.'}
+]};
+
+
+/* ---------- story: the rooms of a sleeping mind ---------- */
+const ECHO_QS=[
+ {q:'Is “7 is a prime number” a proposition, a sentence that is either true or false?',o:['Yes, and it is true','Yes, and it is false','No, it is a question','No, it is a command'],w:'A proposition is a sentence with a definite truth value. “7 is prime” is one, and it is true.'},
+ {q:'Which of these is NOT a proposition?',o:['“Close the door.”','“2 + 2 = 5.”','“Every even number above 2 is a sum of two primes.”','“It is raining in Cairo right now.”'],w:'Commands have no truth value. “2 + 2 = 5” is a false proposition. Goldbach’s conjecture is a proposition whose truth value nobody knows yet.'},
+ {q:'If p is true and q is false, what is the value of `p ∧ q`?',o:['False','True','It depends on p','It cannot be decided'],w:'`p ∧ q` (“p and q”) needs both parts true. One false part makes the whole conjunction false.'}
+];
+
+const ROOMS=[
+{id:'stem',name:'Brainstem',sub:'where the signal starts',topic:null,blocks:[[6,3,2,1],[6,10,2,1],[11,2,1,2],[11,11,1,2]],
+ intro:['* Darkness. Then, a flicker.','* You are a spark: one signal, moving through a mind that has gone quiet.','* Somewhere above you, someone is asleep, and has been for a long time.'],
+ ents:[
+  {t:'npc',x:4,y:5,sym:'g',name:'Glia',lines:['Glia: Oh! A signal! You’re awake. I’m Glia. I hold this place together while she sleeps.','Glia: She is Professor Elin Mar. She spent her whole life proving things.','Glia: Then one night she stopped. The mind went quiet, and other things moved in.','Glia: Fallacies. Each one guards a region of her reasoning. They aren’t evil. They are what is left when understanding goes missing.','Glia: You can’t fight them. A thought can’t punch a misconception. But you can REASON with them until they see clearly. Then you can show MERCY.','Glia: Arrow keys or WASD to move. Z or Enter to talk and confirm. X to go back. C opens your Codex, where everything you learn is kept.','Glia: On a phone, use the pad and buttons under the screen.','Glia: Practice on Echo, over there by the door. Echo only repeats things, but Echo is kind.'],
+   codex:[{t:'How a battle works',b:'Choose REASON to answer the guardian’s question; each right answer builds its understanding. When understanding is complete, MERCY spares it. ASK gives a hint and teaches. ITEM drinks a coffee for 10 HP. Between turns, dodge the flying symbols by moving your spark inside the box.'}]},
+  {t:'save',x:2,y:7},
+  {t:'journal',x:9,y:4,name:'Journal, page 1',lines:['* A page, pressed flat like a leaf. The handwriting is neat and very small.','* “First day of term. I tell my students: a proof is a promise anyone can check. I have been keeping one promise for nineteen years. — E. Mar”']},
+  {t:'stone',x:9,y:10,custom:{t:'What a proposition is',b:'A proposition is a statement that is either true or false, never both. “7 is prime” is true. “2 + 2 = 5” is false. “Close the door” is not a proposition at all. Logic studies how the truth of compound statements depends on their parts.',ex:'“If n is even then n² is even” is a proposition about every integer n. Proving it settles infinitely many cases at once.'}}
+ ],
+ boss:{id:'echo',name:'Echo',sym:'·)',x:16,y:7,orbit:5,need:2,qs:ECHO_QS,pat:['rain'],glyphs:['·','·','∘'],diff:.45,
+  pre:['Echo: ...echo... echo...','Echo: I only say what I hear. Is that the same as knowing?','* Echo wants to practice with you. This one is gentle.'],
+  intro:['* Echo drifts closer. (A battle! Pick REASON with ← → and press Z to answer.)','* After every turn, symbols fly through the box. Move your spark with the arrows to dodge them.'],
+  asks:['Echo: A proposition is just a sentence that is true or false. Not both. Not neither.','Echo: Questions and commands aren’t true or false. They just... ask.','Echo: “And” needs both sides. “Or” needs at least one.'],
+  right:['Echo: ...true. True. Echo likes true.','Echo: I didn’t hear that from anyone. I understood it.'],
+  wrong:['Echo: ...wrong... wrong... (Echo isn’t upset. Echo is just repeating.)'],
+  notyet:'Echo: Not yet... not yet...',
+  spare:['Echo: ...true. True. It feels good to say something because it is true, and not because I heard it.','* You spared Echo. The door to the right is open now.'],
+  post:['Echo: Go on. The first region is logic. The mirrors there are... confused.']}
+},
+
+{id:'logic',name:'Prefrontal Cortex',sub:'the hall of mirrors',topic:'logic',variant:0,
+ intro:['* The prefrontal cortex. Here she planned, judged, and decided.','* Every wall is a mirror. Every reflection is slightly wrong.'],
+ npcs:[
+  {sym:'⊤',name:'Tautology',lines:['Tautology: Hello! I am true. I am always true. Whatever p and q are doing, I am true.','Tautology: I am p ∨ ¬p. Some call that boring. I call it reliable.','Tautology: My cousin Contradiction is p ∧ ¬p. Always false. We don’t speak.','Tautology: Everyone else is a contingency: true in some rows of the truth table and false in others.','Tautology: A formula is satisfiable if at least one row makes it true. So everything except a contradiction is satisfiable.','Tautology: Two formulas are equivalent when they agree in every row. Put another way: A ≡ B exactly when A ↔ B is a tautology.','Tautology: With n variables the table has 2ⁿ rows. Ten variables is 1024 rows. That is why you learn the laws instead of always drawing tables.'],
+   codex:[{t:'Tautology, contradiction, contingency',b:'Tautology: true in every row (p ∨ ¬p). Contradiction: false in every row (p ∧ ¬p). Contingency: neither. Satisfiable: true in at least one row. A ≡ B exactly when A ↔ B is a tautology. n variables give 2ⁿ rows.'}]},
+  {sym:'∀∃',name:'The Quantifier Twins',lines:['∀: We are the quantifiers. I say “for all.”','∃: I say “there exists.” I only need one!','∀: To prove me, take an ARBITRARY element and show it works. You don’t get to pick a friendly one.','∃: To prove me, show a witness. One example is enough!','∀: To disprove me, give one counterexample. To disprove ∃, you must show nothing works, and that is a ∀.','∃: When you negate us, we swap and the negation moves inward: ¬∀x P(x) ≡ ∃x ¬P(x), and ¬∃x P(x) ≡ ∀x ¬P(x).','∀: Order matters. ∀x ∃y (y > x) is true on the integers. ∃y ∀x (y > x) is false. In the first one, y may depend on x.','∃: And watch the domain. ∃x (x² = 2) is false over ℚ and true over ℝ.','∀: One more. “All unicorns can fly” is TRUE. Vacuously. There are no unicorns to fail.','∃: He loves that one.'],
+   codex:[{t:'Quantifiers in practice',b:'Prove ∀ with an arbitrary element; prove ∃ with a witness. Disprove ∀ with one counterexample. Negation swaps the quantifier: ¬∀x P ≡ ∃x ¬P. Order matters (∀x∃y vs ∃y∀x). The domain changes truth (x² = 2 over ℚ vs ℝ). A universal claim about an empty set is vacuously true.'}]}],
+ journal:['* A page torn along one edge.','* “Found it. Lemma 7 says: if a graph is sparse-enough, it has property K. In Chapter 3 I wrote: it has property K, therefore it is sparse-enough. I used the converse. Six years ago. Nobody noticed. I didn’t either. — E.”'],
+ boss:{id:'converse',name:'The Converse',sym:'⇄',mirror:true,orbit:6,need:4,pat:['rain','sweep'],glyphs:['¬','∧','∨','→','↔'],
+  pre:['The Converse: Ah, a visitor! Let me reason about you.','The Converse: If something is a thought, it moves. You move. Therefore you are a thought!','The Converse: ...that one happens to be true. But my method is flawless!','The Converse: If she is a real mathematician, her proofs work. Her proof didn’t work... no, wait. Her proof... it’s all backwards in here.','The Converse: Reason with me. Help me read the mirror.'],
+  intro:['* The Converse reflects everything you say. Backwards.'],
+  asks:['The Converse: Hint? If p → q, then ¬q → ¬p is the same promise. q → p is a different promise.','The Converse: Hint? An implication only breaks when the front is true and the back is false.','The Converse: Hint? To negate “for all”, you only need one exception.','The Converse: Hint? De Morgan: negating “and” gives “or”, and negating “or” gives “and”.'],
+  right:['The Converse: Oh. Oh, that’s the right direction.','The Converse: My reflection blinked first.','The Converse: Forwards... it reads better forwards.'],
+  wrong:['The Converse: Ha! You see it my way!','The Converse: Mirror, mirror...'],
+  notyet:'The Converse: Spare me? I still believe q gives me p!',
+  spare:['The Converse: So p → q, and q... tells me nothing about p.','The Converse: Then she didn’t fail because she isn’t a mathematician. She failed because she read one lemma backwards.','The Converse: That is a mistake. Mistakes have a direction. They can be walked back.','* You spared The Converse. A mirror cracks and lets the light through.'],
+  post:['The Converse: I read everything forwards now. It’s slower. It’s correct.']}
+},
+
+{id:'proofs',name:'Hippocampus',sub:'the archive',topic:'proofs',variant:1,
+ intro:['* The hippocampus: where memories are filed.','* Shelves of examples stretch out of sight. Every one is stamped VERIFIED.'],
+ npcs:[
+  {sym:'⊥',name:'Contra',lines:['Contra: I am Contra. My method looks dramatic, but it is simple.','Contra: To prove S, assume ¬S. Reason until you reach something impossible: a statement and its negation, together.','Contra: True premises can’t lead to a falsehood. So the assumption ¬S was wrong, and S holds.','Contra: People confuse me with my sibling, Contraposition. To prove P → Q, Contraposition proves ¬Q → ¬P directly. No contradiction needed.','Contra: Rule of thumb: try a direct proof first. Use contraposition when ¬Q is easier to work with. Call me when the claim says “not”, “no”, or “infinitely many”.','Contra: √2 is irrational? That’s a “not”. Infinitely many primes? Assume finitely many and build N = p₁p₂⋯pₙ + 1. You see the pattern.'],
+   codex:[{t:'Contradiction vs contraposition',b:'Contradiction: assume ¬S, derive an impossibility, conclude S. Contraposition: prove P → Q by proving ¬Q → ¬P directly. Try direct proof first; contraposition when ¬Q is concrete; contradiction for “not”, “no”, “infinitely many” (√2 irrational, infinitely many primes).'}]},
+  {sym:'∨',name:'Casey',lines:['Casey: Cases! Split the world into pieces you can handle, and handle every piece.','Casey: The pieces must be exhaustive. Even or odd. Positive, zero, or negative. Miss one and the proof has a hole.','Casey: When cases are symmetric, write “without loss of generality, assume x ≤ y” and do just one.','Casey: My friend the Pigeon says: put n + 1 letters in n mailboxes and some box gets two. More generally, N things in k boxes puts at least ⌈N/k⌉ in one box.','Casey: Simple, but it proves surprising things. In any group of 6 people, there are 3 mutual friends or 3 mutual strangers. That’s Ramsey’s R(3,3) = 6, proved with pigeons and cases.'],
+   codex:[{t:'Cases, WLOG, pigeonhole',b:'Proof by cases needs an exhaustive split. WLOG skips symmetric cases. Pigeonhole: n + 1 objects in n boxes share a box; N objects in k boxes put at least ⌈N/k⌉ in one. Example: R(3,3) = 6.'}]},
+  {sym:'#',name:'The Archivist',lines:['The Archivist: Want a warning from the stacks?','The Archivist: In 1919 George Pólya conjectured something about how many prime factors numbers have. It was checked for millions of numbers.','The Archivist: In 1958 a counterexample was proved to exist. The smallest one is 906,150,257.','The Archivist: Euler conjectured you need at least n nth powers to sum to an nth power. In 1966 a computer found 27⁵ + 84⁵ + 110⁵ + 133⁵ = 144⁵.','The Archivist: Examples are wonderful for guessing. They prove nothing about “for all”.','The Archivist: But one counterexample is a complete proof that a “for all” is false. Remember that. It matters here.'],
+   codex:[{t:'Why examples are not proofs',b:'Pólya’s conjecture held for every n below 906,150,257, then failed. Euler’s sum-of-powers conjecture fell to 27⁵ + 84⁵ + 110⁵ + 133⁵ = 144⁵. Checking cases suggests; only proof establishes. One counterexample fully disproves a universal claim.'}]}],
+ journal:['* The ink is smudged, as if it got wet.','* “Tomas emailed at 3 a.m. A single number, twelve digits long. My conjecture fails there. We had checked up to a billion. He apologized four times in one email. I didn’t reply. — E.”'],
+ boss:{id:'anecdote',name:'Anecdote',sym:'✓',orbit:9,need:4,pat:['aimed','rain'],glyphs:['✓','∴','∵','✓'],
+  pre:['Anecdote: Welcome to my archive! Ten thousand examples, every one verified!','Anecdote: n² + n + 41 is prime for n = 0, 1, 2, all the way to 39! Forty examples! Surely it’s ALWAYS prime!','Anecdote: (Don’t check n = 40. Please don’t check n = 40.)','Anecdote: She checked a billion cases. A BILLION. How can a billion examples be wrong?'],
+  intro:['* Anecdote shuffles a stack of examples, very fast.'],
+  asks:['Anecdote: Hint? A universal claim needs a proof that covers an arbitrary case.','Anecdote: Hint? One counterexample beats a billion examples.','Anecdote: Hint? Pick the method that fits the shape of the claim: direct, contrapositive, contradiction, cases.'],
+  right:['Anecdote: ...that’s a proof. Not a pile. A proof.','Anecdote: One shelf just got lighter.','Anecdote: Fine. FINE. n = 40 gives 1681 = 41². Not prime.'],
+  wrong:['Anecdote: See? Another example for my collection!','Anecdote: Verified! (Probably.)'],
+  notyet:'Anecdote: You can’t spare me yet. I have 9,999 more examples.',
+  spare:['Anecdote: So a billion examples was never a proof. And one counterexample is.','Anecdote: Then Tomas’s number isn’t an insult. It’s a theorem: “there exists an n where the conjecture fails.” It is TRUE, and it is PROVED.','Anecdote: She should have read that email as a gift.','* You spared Anecdote. The shelves quietly relabel themselves: EVIDENCE, not PROOF.'],
+  post:['Anecdote: I’m keeping the examples. They’re good for guessing.']}
+},
+
+{id:'sets',name:'Temporal Lobe',sub:'the library of collections',topic:'sets',variant:2,
+ intro:['* The temporal lobe. Names, categories, the sorting of things into kinds.','* Boxes inside boxes inside boxes. One box is labelled “all boxes that don’t contain themselves.” It is shaking.'],
+ npcs:[
+  {sym:'∅',name:'Empty',lines:['∅: Hi. I’m the empty set. I contain nothing. People think that makes me nothing. It doesn’t.','∅: I’m a subset of every set. To be a subset of A, every element of me must be in A. I have no elements, so I pass every test.','∅: But I’m not an element of every set. ∅ ⊆ {1, 2} is true. ∅ ∈ {1, 2} is false.','∅: And {∅} is not me. It’s a box holding an empty box. It has one element.','∅: You can build all the natural numbers from me: 0 = ∅, 1 = {∅}, 2 = {∅, {∅}}, and n + 1 = n ∪ {n}. Von Neumann did.','∅: Not bad for nothing.'],
+   codex:[{t:'The empty set',b:'∅ ⊆ A for every A (vacuously), but ∅ ∈ A only if listed. {∅} ≠ ∅: it has one element. |P(∅)| = 1. Von Neumann naturals: 0 = ∅, 1 = {∅}, 2 = {∅, {∅}}, n + 1 = n ∪ {n}.'}]},
+  {sym:'∞',name:'Hilbert',lines:['Hilbert: Welcome to my hotel. Infinitely many rooms, every one occupied.','Hilbert: A new guest? Everyone moves from room n to room n + 1. Room 1 is free.','Hilbert: Infinitely many new guests? Everyone moves to room 2n. All the odd rooms are free.','Hilbert: Two sets have the same size when there is a bijection between them. ℕ, ℤ and even ℚ are the same size. We call them countable.','Hilbert: But a coach of guests, one for every infinite string of 0s and 1s? I cannot fit them. Cantor showed why.','Hilbert: Suppose you had a list. Build a new string by flipping the nth digit of the nth guest. It differs from everyone on the list. So no list works.','Hilbert: That’s the diagonal argument. P(ℕ) and ℝ are uncountable. And Cantor’s theorem says |P(A)| > |A| for every set: there is no biggest infinity.'],
+   codex:[{t:'Countable and uncountable',b:'Same size means a bijection exists. ℕ, ℤ, ℚ, ℕ × ℕ are countable (Hilbert’s hotel shifts n ↦ n + 1, n ↦ 2n). Diagonal argument: any list of infinite binary strings misses the string flipping each nth digit of the nth entry, so P(ℕ) and ℝ are uncountable. Cantor: |P(A)| > |A| always.'}]}],
+ journal:['* The page has been folded and unfolded many times.','* “I keep asking whether I can trust the mind that made the mistake. But it is the only mind I have to check the mistake with. Is that circular? — E.”'],
+ boss:{id:'russell',name:'Russell’s Set',sym:'∈',flicker:['∈','∉'],orbit:7,need:4,pat:['bounce','ring'],glyphs:['∈','∉','⊆','∅','∪','∩'],
+  pre:['Russell’s Set: Do I contain myself?','Russell’s Set: I am the set of all sets that do not contain themselves. If I contain myself, I shouldn’t. If I don’t, I should.','Russell’s Set: In. Out. In. Out. I flip forever.','Russell’s Set: She does it too. Can a mind that doubts itself trust its own doubt? In. Out.'],
+  intro:['* Russell’s Set flickers between in and out.'],
+  asks:['Russell’s Set: Hint? ∈ means “is an element of”. ⊆ means “every element is also in”.','Russell’s Set: Hint? A set with n elements has 2ⁿ subsets.','Russell’s Set: Hint? Two sets are equal when they have exactly the same elements.','Russell’s Set: Hint? Countable means you can list it, one by one, missing nothing.'],
+  right:['Russell’s Set: ...that settled one flip.','Russell’s Set: In. Just in. For a moment it was quiet.','Russell’s Set: A definite answer. I’d forgotten what those feel like.'],
+  wrong:['Russell’s Set: In! Out! In!','Russell’s Set: The paradox grows.'],
+  notyet:'Russell’s Set: You can’t spare something that might not exist!',
+  spare:['Russell’s Set: So the answer is... I’m not a set at all?','Russell’s Set: Not every description makes a set. Mathematicians fixed this with axioms: you may only carve a set out of a set you already have.','Russell’s Set: I was never a contradiction in the world. I was a badly asked question.','Russell’s Set: Maybe her doubt is like me. Not proof that she is broken. Just a question that needs better axioms.','* You spared Russell’s Set. It stops flickering and settles, gently, outside every box.'],
+  post:['Russell’s Set: I live outside the library now. The view is lovely.']}
+},
+
+{id:'func',name:'Parietal Lobe',sub:'the switchyard',topic:'func',variant:0,
+ intro:['* The parietal lobe. Where things are mapped onto other things: hands onto space, words onto meaning.','* Rails split and merge. Two tracks run into one and never come apart again.'],
+ npcs:[
+  {sym:'↔',name:'Pairing',lines:['Pairing: I match things up. One to one, nobody left out. That makes me a bijection.','Pairing: Injective means no two inputs share an output. Picture arrows: no two land on the same point.','Pairing: Surjective means every point of the codomain gets hit by some arrow.','Pairing: For finite sets of the same size, injective and surjective are the same thing. For infinite sets, no: n ↦ n + 1 on ℕ is injective but never hits 0.','Pairing: The image f(A) is everything that gets hit. The preimage f⁻¹(B) is everything that lands in B. Preimages exist even when no inverse does.','Pairing: Counting: from an m-set to an n-set there are nᵐ functions, and n!/(n − m)! of them are injective.'],
+   codex:[{t:'Injections, surjections, images',b:'Injective: no shared outputs. Surjective: every codomain point hit. Bijective: both, so an inverse exists. Finite equal-size sets: injective ⇔ surjective; on ℕ, n ↦ n + 1 is injective, not surjective. Images and preimages exist for every function. nᵐ functions from an m-set to an n-set, n!/(n − m)! injective.'}]},
+  {sym:'≤',name:'Order',lines:['Order: I arrange things. Not always in a line, though.','Order: A partial order is reflexive, antisymmetric and transitive. Like ⊆ on sets, or “divides” on positive integers.','Order: “Partial” means some pairs are incomparable. 2 doesn’t divide 3, and 3 doesn’t divide 2.','Order: If every pair is comparable, like ≤ on numbers, I’m a total order.','Order: Draw me as a Hasse diagram: bigger things higher, connect only covering pairs, leave out loops and anything transitivity implies.','Order: My cousin the equivalence relation is reflexive, symmetric and transitive. It doesn’t rank. It groups things into classes that never overlap.'],
+   codex:[{t:'Partial orders and equivalence',b:'Partial order: reflexive, antisymmetric, transitive (⊆, divides). Some pairs may be incomparable; a total order has none. Hasse diagrams show only covering pairs. Equivalence relation: reflexive, symmetric, transitive; it partitions the set into disjoint classes.'}]}],
+ journal:['* A conference program, with one line crossed out in pencil.','* “The conference website lists my talk as WITHDRAWN. A one-way function: talk ↦ withdrawn. I can’t find an inverse. — E.”'],
+ boss:{id:'collision',name:'The Collision',sym:'⤨',orbit:8,need:4,pat:['sweep','aimed'],glyphs:['↦','→','∘','f'],
+  pre:['The Collision: Two things came to me. I sent them both to the same place.','The Collision: Now when someone asks “where did this come from?”, I can’t answer. I’m not injective.','The Collision: I can never be undone. There is no f⁻¹ for me.','The Collision: She feels like me. Something happened that cannot be reversed.'],
+  intro:['* Two tracks run into The Collision. Only one comes out.'],
+  asks:['The Collision: Hint? Injective: f(a) = f(b) forces a = b.','The Collision: Hint? Surjective: everything in the codomain gets hit.','The Collision: Hint? An equivalence relation is reflexive, symmetric and transitive.','The Collision: Hint? A two-sided inverse needs a bijection.'],
+  right:['The Collision: You understand the arrows.','The Collision: Something untangled.','The Collision: Yes. That is how mapping works.'],
+  wrong:['The Collision: Another collision.','The Collision: Everything lands in the same place.'],
+  notyet:'The Collision: Mercy? I can’t even undo myself.',
+  spare:['The Collision: I can’t be inverted. But the things that collide in me form classes: a ~ b when f(a) = f(b).','The Collision: That’s an equivalence relation. And on those classes, I AM injective.','The Collision: I can’t be undone. But I can be understood. That is a different kind of inverse.','The Collision: A withdrawn talk can’t be un-withdrawn. She can still give the next one.','* You spared The Collision. The two tracks stay merged, and now they are labelled.'],
+  post:['The Collision: Restrict my domain and I behave. x² on [0, ∞) has an inverse. Funny, that.']}
+},
+
+{id:'ind',name:'Cerebellum',sub:'the long stair',topic:'ind',variant:1,
+ intro:['* The cerebellum. It learns by repetition: one step, then the next, until walking needs no thought.','* A staircase climbs forever. At the bottom stands a single domino. It refuses to fall.'],
+ npcs:[
+  {sym:'n',name:'Stairwright',lines:['Stairwright: I build stairs. Infinite ones. The trick is, I never build them all.','Stairwright: I build the first step. Then I prove that whenever step k exists, step k + 1 can be built on it.','Stairwright: That’s induction. Base case: P(n₀). Inductive step: P(k) → P(k + 1) for every k ≥ n₀.','Stairwright: Write it properly. “Assume P(k) for an arbitrary k ≥ n₀.” Then show exactly where you use it. If you never use it, it wasn’t induction.','Stairwright: Example: 3 divides n³ − n. Base: 0³ − 0 = 0. Step: (k + 1)³ − (k + 1) = (k³ − k) + 3k² + 3k. The first part is divisible by 3 by hypothesis, the rest plainly is.','Stairwright: The base isn’t always 0. 2ⁿ > n² fails for n = 2, 3, 4 and holds from n = 5 on. Choose your base carefully.'],
+   codex:[{t:'Writing an induction proof',b:'State P(n). Prove the base P(n₀). Assume P(k) for arbitrary k ≥ n₀, prove P(k + 1), and point out where the hypothesis is used. Example: 3 | n³ − n since (k + 1)³ − (k + 1) = (k³ − k) + 3(k² + k). Bases matter: 2ⁿ > n² holds only from n = 5.'}]},
+  {sym:'Fₙ',name:'Recursion',lines:['Recursion: Hello, hello, hello. I define things in terms of smaller versions of themselves.','Recursion: Fibonacci: F₀ = 0, F₁ = 1, Fₙ = Fₙ₋₁ + Fₙ₋₂. Two base cases, because each step looks two back.','Recursion: That’s why proofs about me use strong induction: you may assume every earlier case, not just the last.','Recursion: Strings, trees and formulas are recursive too. A binary tree is either empty, or a root with two binary subtrees.','Recursion: To prove things about them, use structural induction: prove it for the base objects, then show every construction rule preserves it.','Recursion: Recursion and induction are one idea seen from two sides. One builds. The other proves.'],
+   codex:[{t:'Recursion and strong induction',b:'Recursive definitions build objects from smaller ones (Fibonacci needs two bases). Strong induction assumes all earlier cases. Structural induction proves a property for base objects and shows each constructor preserves it. Recursion builds; induction proves.'}]}],
+ journal:['* A sticky note, stuck to nothing.','* “Students keep emailing. ‘One step at a time, Professor.’ I taught them that. I can’t take the first one. — E.”'],
+ boss:{id:'domino',name:'Domino',sym:'▯',orbit:6,need:4,pat:['rain','bounce'],glyphs:['n','k','+1','∎'],
+  pre:['Domino: Don’t push me.','Domino: If I fall, the next one falls, and the next, forever. Everything depends on me.','Domino: What if I’m wrong? What if the first step is the false one?','Domino: She hasn’t opened her notebook in months. If the first page is wrong, the whole book is wrong.'],
+  intro:['* Domino stands very, very still.'],
+  asks:['Domino: Hint? You need BOTH a base case and an inductive step.','Domino: Hint? Strong induction assumes every case up to k.','Domino: Hint? Check that the step really works even for the smallest k.'],
+  right:['Domino: The base case... holds. I checked. It holds.','Domino: The step from me to the next one is sound.','Domino: I wobbled. On purpose.'],
+  wrong:['Domino: See? Things go wrong!','Domino: I’m not moving.'],
+  notyet:'Domino: Not yet. I need to check the base case again.',
+  spare:['Domino: The base case is true. And whenever a domino falls, the next one falls.','Domino: Then I don’t have to be brave about all of them. Just about me. Just one step.','Domino: Here goes.','* The domino tips. The sound of falling dominoes goes on, up the stairs, for a very long time.','* You spared Domino.'],
+  post:['Domino: I’m lying down now. It’s very restful being a completed proof.']}
+},
+
+{id:'num',name:'Basal Ganglia',sub:'the clockworks',topic:'num',variant:2,
+ intro:['* The basal ganglia: rhythm, habit, timing.','* Gears tick in perfect cycles. Every cycle leaves a little something left over.'],
+ npcs:[
+  {sym:'gcd',name:'Euclid',lines:['Euclid: Greetings. I am old. My algorithm is older than most of your languages.','Euclid: To find gcd(a, b): divide, keep the remainder, repeat. gcd(a, b) = gcd(b, a mod b). When the remainder hits 0, the last nonzero one is the answer.','Euclid: Why does it work? Anything dividing a and b also divides a − qb, the remainder. The common divisors never change.','Euclid: It is fast. The numbers at least halve every two steps.','Euclid: Run it backwards and you get Bézout: gcd(a, b) = ax + by for some integers x and y.','Euclid: From that comes my lemma: if a prime p divides ab, then p divides a or p divides b. That is why prime factorizations are unique.'],
+   codex:[{t:'Euclid, Bézout, unique factorization',b:'gcd(a, b) = gcd(b, a mod b); stop at remainder 0. Divisors are preserved because d | a, d | b ⇒ d | a − qb. Back-substitution gives Bézout: gcd = ax + by. Euclid’s lemma: p | ab ⇒ p | a or p | b, which gives unique prime factorization.'}]},
+  {sym:'mod',name:'The Clockmaker',lines:['The Clockmaker: On my clocks, 9 + 5 = 2. That’s arithmetic mod 12.','The Clockmaker: a ≡ b (mod n) means n divides a − b. Add, subtract, multiply, and reduce whenever you like.','The Clockmaker: Division is trickier. a has an inverse mod n exactly when gcd(a, n) = 1. Find it with extended Euclid.','The Clockmaker: Mod a prime p, every nonzero number has an inverse, and Fermat says aᵖ⁻¹ ≡ 1. For any n, Euler says a^φ(n) ≡ 1 when gcd(a, n) = 1.','The Clockmaker: For big powers, square repeatedly. 3⁶⁴ is six squarings, not sixty-three multiplications.','The Clockmaker: RSA: pick primes p and q, publish n = pq and e, keep d with ed ≡ 1 mod φ(n). Encrypt with mᵉ, decrypt with cᵈ. Without p and q, nobody can find φ(n).'],
+   codex:[{t:'Modular arithmetic and RSA',b:'a ≡ b (mod n) ⇔ n | a − b. Add and multiply freely; an inverse exists iff gcd(a, n) = 1. Fermat: aᵖ⁻¹ ≡ 1 (mod p). Euler: a^φ(n) ≡ 1. Fast exponentiation by repeated squaring. RSA: n = pq public, ed ≡ 1 mod φ(n), encrypt mᵉ, decrypt cᵈ.'}]}],
+ journal:['* Written on the back of a seminar flyer.','* “Tomas told me once he never felt he belonged in my group. Everyone else divided evenly into the work, he said. He was the remainder. He found the counterexample alone, on a Sunday. — E.”'],
+ boss:{id:'remainder',name:'The Remainder',sym:'r',lone:true,orbit:6,need:4,pat:['ring','sweep'],glyphs:['0','1','2','3','7','≡'],
+  pre:['The Remainder: Everyone divides evenly. Everyone except me.','The Remainder: I’m what is left over. The part that doesn’t fit.','The Remainder: Nobody wants a remainder. They round me off.'],
+  intro:['* The Remainder sits a little apart from everything else.'],
+  asks:['The Remainder: Hint? a = qn + r with 0 ≤ r < n. I’m r.','The Remainder: Hint? An inverse mod n exists exactly when gcd(a, n) = 1.','The Remainder: Hint? Reduce at every step. You never need the huge number.','The Remainder: Hint? Fermat: aᵖ⁻¹ ≡ 1 mod a prime p, if p doesn’t divide a.'],
+  right:['The Remainder: ...you used me. Just me. Not the quotient.','The Remainder: That whole answer was built from remainders.','The Remainder: I mattered there.'],
+  wrong:['The Remainder: Rounded off again.','The Remainder: Nobody counts the leftovers.'],
+  notyet:'The Remainder: Spare me? You haven’t even used me yet.',
+  spare:['The Remainder: Wait. All of modular arithmetic is remainders. Clocks. Calendars. Cryptography.','The Remainder: The quotient says how many times something fit. The remainder says what is special about it.','The Remainder: Tomas was the remainder. That’s why he saw what the rest of them couldn’t.','* You spared The Remainder. Somewhere, a lock clicks open.'],
+  post:['The Remainder: 17 mod 5 is 2. I’m the 2. I’m proud of it.']}
+},
+
+{id:'count',name:'Occipital Lobe',sub:'the abacus fields',topic:'count',variant:0,
+ intro:['* The occipital lobe, where she learned to see patterns.','* Fields of abacus beads in every direction. Something has been counting them, and counting them again.'],
+ npcs:[
+  {sym:'C',name:'Choosy',lines:['Choosy: Before you count anything, ask two questions. Does order matter? Are repeats allowed?','Choosy: Order matters, repeats allowed: nᵏ. Passwords.','Choosy: Order matters, no repeats: n!/(n − k)!. Podium finishes.','Choosy: Order doesn’t matter, no repeats: C(n, k) = n!/(k!(n − k)!). Committees.','Choosy: Order doesn’t matter, repeats allowed: C(n + k − 1, k). Donuts. Stars and bars.','Choosy: Stuck? Count the ordered version, then divide by how many times each answer got counted.'],
+   codex:[{t:'The four counting cases',b:'Ordered with repeats: nᵏ. Ordered without repeats: n!/(n − k)!. Unordered without repeats: C(n, k). Unordered with repeats: C(n + k − 1, k). When unsure, count ordered and divide by the overcount.'}]},
+  {sym:'△',name:'Pascal',lines:['Pascal: My triangle! Each entry is the sum of the two above it: C(n, k) = C(n − 1, k − 1) + C(n − 1, k).','Pascal: Why? A chosen subset either contains a special element or it doesn’t. That’s a combinatorial proof: count one thing two ways.','Pascal: Row n sums to 2ⁿ: every subset of an n-set. And C(n, k) = C(n, n − k): choosing what to take is choosing what to leave.','Pascal: The binomial theorem: (x + y)ⁿ = Σ C(n, k) xᵏ yⁿ⁻ᵏ.','Pascal: For overlaps, inclusion–exclusion: |A ∪ B ∪ C| = |A| + |B| + |C| − |A ∩ B| − |A ∩ C| − |B ∩ C| + |A ∩ B ∩ C|.','Pascal: Add the singles, subtract the pairs, add the triples. Keep alternating.'],
+   codex:[{t:'Pascal, binomials, inclusion–exclusion',b:'C(n, k) = C(n − 1, k − 1) + C(n − 1, k). Rows sum to 2ⁿ. C(n, k) = C(n, n − k). (x + y)ⁿ = Σ C(n, k)xᵏyⁿ⁻ᵏ. Combinatorial proof: count one set two ways. Inclusion–exclusion alternates singles, pairs, triples…'}]}],
+ journal:['* A long list, in very small handwriting. Most lines are crossed out.','* “I made a list of everything I got wrong. 47 items. Then I noticed: it was one mistake, counted in every chapter it touched. — E.”'],
+ boss:{id:'overcount',name:'Overcount',sym:'#',ghost:true,orbit:8,need:4,pat:['rain','ring'],glyphs:['C','!','Σ','×'],
+  pre:['Overcount: Failures! Let me count them! One, two, two again, three, three again, three AGAIN...','Overcount: Forty-seven! Ninety-four! I count everything twice. Sometimes three times.','Overcount: Every chapter that used the bad lemma is another failure. Isn’t it?'],
+  intro:['* Overcount is counting you. Twice.'],
+  asks:['Overcount: Hint? Does order matter? Are repeats allowed?','Overcount: Hint? If everything got counted k times, divide by k.','Overcount: Hint? Overlaps get added twice, so subtract them once.'],
+  right:['Overcount: ...I counted that once. Exactly once.','Overcount: Divide by the overcount. Huh.','Overcount: The number got smaller. And truer.'],
+  wrong:['Overcount: More! Count it again!','Overcount: Double it!'],
+  notyet:'Overcount: Spare me? Let me count the reasons not to. One, one, one...',
+  spare:['Overcount: So when the same thing shows up in many places, you count it once and subtract the overlaps.','Overcount: Forty-seven entries. One mistake. One lemma read backwards.','Overcount: One is a very fixable number.','* You spared Overcount. The beads settle into one neat row.'],
+  post:['Overcount: I counted the stars. Once each. It took ages. It was lovely.']}
+},
+
+{id:'prob',name:'Amygdala',sub:'the house of chance',topic:'prob',variant:1,
+ intro:['* The amygdala: fear, hope, the feeling in your gut before a decision.','* Dice roll on every table. A wheel spins and spins. Someone is very sure their luck is about to change.'],
+ npcs:[
+  {sym:'P(|)',name:'Bayes',lines:['Bayes: Hoo. Let me tell you about tests.','Bayes: A disease affects 1 person in 1000. A test catches it 99% of the time, and wrongly flags 1% of healthy people.','Bayes: You test positive. What’s the chance you’re sick? Most people say 99%. It’s about 9%.','Bayes: Picture 100,000 people. 100 are sick, and 99 of them test positive. 99,900 are healthy, and 999 of them test positive too. 99 out of 1098 is about 9%.','Bayes: That’s my rule: P(A | B) = P(B | A) P(A) / P(B). The base rate P(A) matters enormously.','Bayes: And conditional probability, P(A | B) = P(A ∩ B)/P(B), just means: shrink the world to B, then measure A inside it.'],
+   codex:[{t:'Conditioning and Bayes',b:'P(A | B) = P(A ∩ B)/P(B): restrict the sample space to B. Bayes: P(A | B) = P(B | A)P(A)/P(B). Base rates dominate: at 1/1000 prevalence, a test with 99% sensitivity and 1% false positives gives only about a 9% chance of disease after a positive result.'}]},
+  {sym:'E',name:'Expectation',lines:['Expectation: I’m the average you’d get if you repeated something forever.','Expectation: E[X] = Σ x · P(X = x). For a die, (1 + 2 + ⋯ + 6)/6 = 3.5. You can’t roll it. It’s still the right average.','Expectation: My superpower is linearity: E[X + Y] = E[X] + E[Y], even when X and Y depend on each other.','Expectation: Trick: write a count as a sum of indicators. n people grab hats at random. Expected number who get their own? Each does with probability 1/n, so 1 in total.','Expectation: Spread is variance: Var(X) = E[X²] − E[X]². Variances of independent variables add.','Expectation: Markov: P(X ≥ a) ≤ E[X]/a for X ≥ 0. Chebyshev: P(|X − μ| ≥ kσ) ≤ 1/k². Averages of many trials concentrate: the law of large numbers.'],
+   codex:[{t:'Expectation, variance, bounds',b:'E[X] = Σ x P(X = x). Linearity holds without independence; use indicator variables (expected fixed points of a random permutation = 1). Var(X) = E[X²] − E[X]², additive when independent. Markov: P(X ≥ a) ≤ E[X]/a. Chebyshev: P(|X − μ| ≥ kσ) ≤ 1/k². Law of large numbers.'}]}],
+ journal:['* A betting slip. On the back, a note.','* “Nineteen years without a breakthrough. I told myself I was due. As if the universe kept a ledger. — E.”'],
+ boss:{id:'gambler',name:'The Gambler',sym:'½',dice:true,orbit:6,need:4,pat:['bounce','aimed'],glyphs:['½','⅙','P','E'],
+  pre:['The Gambler: Twelve tails in a row, friend. Twelve! Heads is DUE.','The Gambler: The universe owes me. It owes HER. Nineteen years of tails.','The Gambler: One more spin and it all evens out. That’s how probability works, right?'],
+  intro:['* The Gambler shuffles a deck with no aces in it.'],
+  asks:['The Gambler: Hint? Independent events don’t remember each other.','The Gambler: Hint? Count outcomes in the event and divide by all outcomes.','The Gambler: Hint? Expectation adds up, even for dependent variables.'],
+  right:['The Gambler: Huh. The dice don’t care about me?','The Gambler: That’s... annoyingly correct.','The Gambler: The wheel slowed down a little.'],
+  wrong:['The Gambler: Double or nothing!','The Gambler: Heads is due, I tell you!'],
+  notyet:'The Gambler: Mercy? Let me win one first!',
+  spare:['The Gambler: So the coin has no memory. The thirteenth flip is still one half.','The Gambler: Nobody is owed a breakthrough. But every honest attempt has a chance, and expectation adds up.','The Gambler: Keep flipping, and the expected number of heads grows with every flip. Not because you’re due. Because you kept going.','* You spared The Gambler. The wheel stops. It lands on nothing in particular, and that’s fine.'],
+  post:['The Gambler: I’ve taken up statistics. Less exciting. More winning.']}
+},
+
+{id:'graph',name:'Corpus Callosum',sub:'the bridges',topic:'graph',variant:2,
+ intro:['* The corpus callosum: two hundred million fibres joining the left of the mind to the right.','* A city of islands and bridges. A keeper stands at the last bridge, arms folded.'],
+ npcs:[
+  {sym:'χ',name:'The Colourist',lines:['The Colourist: I paint vertices. One rule: no edge may join two of the same colour.','The Colourist: The fewest colours you need is the chromatic number, χ(G). A triangle needs 3. An even cycle needs only 2.','The Colourist: χ(G) ≤ 2 exactly when G is bipartite, which happens exactly when G has no odd cycle.','The Colourist: Greedy colouring never uses more than Δ + 1 colours, where Δ is the largest degree.','The Colourist: Every planar map needs at most 4 colours. That theorem needed a computer, in 1976.','The Colourist: Colouring is everywhere: exam timetables, register allocation, radio frequencies. Conflicts are edges. Colours are resources.'],
+   codex:[{t:'Graph colouring',b:'χ(G) is the fewest colours with no monochromatic edge. χ ≤ 2 ⇔ bipartite ⇔ no odd cycle. Greedy uses ≤ Δ + 1. Four Colour Theorem (1976): planar graphs need ≤ 4. Uses: scheduling, register allocation, frequency assignment.'}]},
+  {sym:'T',name:'Tree',lines:['Tree: I’m connected and I have no cycles. That’s all a tree is.','Tree: With n vertices I have exactly n − 1 edges. Add one more and you make a cycle. Take one away and I fall apart.','Tree: Between any two of my vertices there is exactly one path.','Tree: Every connected graph contains a spanning tree: a tree that reaches every vertex using only the graph’s edges.','Tree: With weights, Kruskal’s algorithm builds the cheapest one: add the lightest edge that makes no cycle, and repeat.','Tree: And my friend Dijkstra finds shortest paths from one source, as long as no edge weight is negative.'],
+   codex:[{t:'Trees, spanning trees, paths',b:'A tree is connected and acyclic; n vertices ⇒ n − 1 edges; exactly one path between any two vertices. Every connected graph has a spanning tree. Kruskal builds a minimum spanning tree greedily. Dijkstra finds shortest paths when weights are nonnegative.'}]}],
+ journal:['* A note pinned to a bridge rail.','* “Dana and Wei came by again. I didn’t answer the door. The bridges are all still there. I just don’t cross them. — E.”'],
+ boss:{id:'bridge',name:'The Bridgekeeper',sym:'⌒',bridges:true,orbit:7,need:4,pat:['sweep','ring','aimed'],glyphs:['•','—','χ','∘'],
+  pre:['The Bridgekeeper: Königsberg had seven bridges. Nobody could cross each one exactly once. Euler proved nobody ever could.','The Bridgekeeper: Four land masses, each touching an odd number of bridges. No Euler path. No way around it.','The Bridgekeeper: She has bridges too. To her colleagues. To Tomas. She thinks she has to make a perfect walk across all of them, or none.','The Bridgekeeper: So: none.'],
+  intro:['* The Bridgekeeper blocks the way.'],
+  asks:['The Bridgekeeper: Hint? The sum of the degrees is twice the number of edges.','The Bridgekeeper: Hint? Euler circuits need every degree even. Euler paths allow exactly two odd vertices.','The Bridgekeeper: Hint? A graph is bipartite exactly when it has no odd cycle.'],
+  right:['The Bridgekeeper: ...correct. Annoyingly correct.','The Bridgekeeper: You know your degrees.','The Bridgekeeper: One plank of my argument creaks.'],
+  wrong:['The Bridgekeeper: No crossing!','The Bridgekeeper: Stay on your island.'],
+  notyet:'The Bridgekeeper: Mercy? Not until you can cross my bridge.',
+  spare:['The Bridgekeeper: Euler was right. No walk crosses every bridge exactly once.','The Bridgekeeper: But that was never the question. To get home you only need A path. And the graph is connected.','The Bridgekeeper: She doesn’t need a perfect tour of everyone she let down. She needs one bridge. To one person.','* You spared The Bridgekeeper. The keeper steps aside. The last door opens onto the cortex.'],
+  post:['The Bridgekeeper: Go on. Cross. Nobody is checking which bridges.']}
+},
+
+{id:'cortex',name:'Cortex',sub:'the waking room',topic:'all',blocks:[[5,3,1,1],[5,10,1,1],[9,2,1,1],[9,11,1,1],[13,3,1,1],[13,10,1,1]],
+ intro:['* The cortex. The outer layer, where everything she ever learned meets everything else.','* It is very quiet. In the middle sits a figure at a desk, with a closed notebook in front of it.'],
+ ents:[
+  {t:'npc',x:4,y:5,sym:'g',name:'Glia',lines:['Glia: You made it. Every guardian spared.','Glia: She is just ahead. Not a fallacy. Just her, and the part of her that stopped believing.','Glia: She will ask you about everything: logic, proofs, sets, functions, induction, numbers, counting, chance, graphs.','Glia: You know all of it now. Be kind.']},
+  {t:'save',x:2,y:7},
+  {t:'journal',x:8,y:10,name:'Tomas’s letter',lines:['* An envelope, never opened. On the front: TOMAS.','* “Professor Mar. I’m sorry about the email. I’m sorry it was me. I should have said this first: I only found that number because you taught me to look for counterexamples.”','* “You told us they were the most honest theorems there are. It is your theorem too. I’d like to write it up together, if you want. — Tomas”']}
+ ],
+ boss:{id:'sleeper',name:'The Sleeper',sym:'∎',eye:true,orbit:12,need:6,pat:['rain','sweep','ring','bounce','aimed'],glyphs:['¬','∈','↦','n','≡','C','½','χ','∴'],diff:1.25,
+  pre:['The Sleeper: You’re the spark. The thought that wouldn’t stop.','The Sleeper: Nineteen years, and the conjecture is false. Do you know what that makes the nineteen years?','The Sleeper: Nothing. A proof of nothing.','The Sleeper: Convince me otherwise. Reason with me. All of it.'],
+  intro:['* Elin Mar’s doubt opens its eye, a little.'],
+  asks:['The Sleeper: Hint? Remember what each guardian taught you.','The Sleeper: Hint? Slow down. Read the statement forwards.','The Sleeper: Hint? A counterexample is itself a proof.','The Sleeper: Hint? Open the Codex later if you need it. Everything you learned is there.'],
+  right:['The Sleeper: ...I remember that. I taught that.','The Sleeper: My hands remember the chalk.','The Sleeper: That’s right. That is exactly right.','The Sleeper: The notebook is warm.'],
+  wrong:['The Sleeper: See. Even you get lost.','The Sleeper: It slips away.'],
+  notyet:'The Sleeper: Not yet. I’m not ready to wake up.',
+  spare:['The Sleeper: The conjecture is false. And that is a theorem now: there exists a number where it fails. Proved. True forever.','The Sleeper: I read one lemma backwards. One mistake, not forty-seven. Not the whole of me.','The Sleeper: Examples were never proof. Doubt was never a set. A withdrawn talk can still be followed by a new one.','The Sleeper: The first step holds. The remainder was the one who saw it. Nobody is due anything. And the bridges are still there.','The Sleeper: Tomas. I should write back.','* The notebook opens.','* Light runs out along every fibre of the mind, all at once.'],
+  post:[]}
+}
+];
+
+const ENDING=['Six months later.','A preprint appears online: “A Counterexample to the Mar Conjecture, and What It Taught Us.” Authors: Tomas Ilić and Elin Mar.','Its first line: “We show the conjecture is false. This paper is about why that is good news.”','In the acknowledgements: “To the students who check our work. Especially when we are wrong.”','Somewhere in the cortex, a small spark is still moving. It doesn’t need to. It just likes to.'];
+
+/* ---------- engine ---------- */
+const CW=640,CH=480,TS=32,COLS=20,ROWS=14,OY=32;
+const cv=document.getElementById('game'),g=cv.getContext('2d');
+const YC='236,231,220',yc=a=>`rgba(${YC},${a})`,GOOD='#a8cfa6',BAD='#e39b87';
+const MONO='"Space Mono", ui-monospace, Menlo, monospace',SERIF='"Cormorant Garamond", Georgia, serif';
+function fitCanvas(){const d=Math.min(2,window.devicePixelRatio||1);cv.width=CW*d;cv.height=CH*d;g.setTransform(d,0,0,d,0,0)}
+fitCanvas();addEventListener('resize',fitCanvas);
+
+/* input */
+const held={},pressed={};
+const KEYMAP={ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down',ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',KeyZ:'a',Enter:'a',Space:'a',NumpadEnter:'a',KeyX:'b',ShiftLeft:'b',ShiftRight:'b',Escape:'b',Backspace:'b',KeyC:'c',KeyM:'m'};
+function press(k){if(!held[k])pressed[k]=true;held[k]=true;audioInit()}
+addEventListener('keydown',e=>{const k=KEYMAP[e.code];if(!k)return;if(codexEl.open){if(e.target.tagName==='INPUT'&&e.code!=='Escape')return;if(k==='c'||k==='b'){e.preventDefault();closeCodex()}return}e.preventDefault();press(k)});
+addEventListener('keyup',e=>{const k=KEYMAP[e.code];if(k)held[k]=false});
+document.querySelectorAll('[data-k]').forEach(b=>{const k=b.dataset.k;
+  b.addEventListener('pointerdown',e=>{e.preventDefault();try{b.setPointerCapture?.(e.pointerId)}catch(_){}if(k==='c'){toggleCodex();return}press(k)});
+  ['pointerup','pointercancel','pointerleave'].forEach(ev=>b.addEventListener(ev,()=>{held[k]=false}))});
+const take=k=>{if(pressed[k]){pressed[k]=false;return true}return false};
+// drag to steer the spark while dodging
+let drag=null;cv.addEventListener('pointerdown',e=>{audioInit();if(S.mode==='battle'&&B&&B.phase==='dodge'){drag={x:e.clientX,y:e.clientY};try{cv.setPointerCapture(e.pointerId)}catch(_){}}else press('a'),setTimeout(()=>held.a=false,80)});
+cv.addEventListener('pointermove',e=>{if(!drag||!B||B.phase!=='dodge')return;const r=cv.getBoundingClientRect(),k=CW/r.width;B.soul.x+=(e.clientX-drag.x)*k;B.soul.y+=(e.clientY-drag.y)*k;drag={x:e.clientX,y:e.clientY}});
+['pointerup','pointercancel'].forEach(ev=>cv.addEventListener(ev,()=>drag=null));
+
+/* audio */
+let AC=null,muted=false;
+function audioInit(){if(AC||muted)return;try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}
+function beep(f,d=.04,type='square',v=.03){if(!AC||muted)return;const o=AC.createOscillator(),gn=AC.createGain();o.type=type;o.frequency.value=f;gn.gain.value=v;gn.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);o.connect(gn).connect(AC.destination);o.start();o.stop(AC.currentTime+d)}
+const sfx={blip:()=>beep(520+Math.random()*40,.03,'square',.018),sel:()=>beep(660,.05,'triangle',.05),ok:()=>{beep(660,.08,'triangle',.06);setTimeout(()=>beep(990,.12,'triangle',.06),80)},no:()=>beep(160,.18,'sawtooth',.04),hit:()=>beep(110,.12,'square',.05),save:()=>{beep(523,.1,'sine',.06);setTimeout(()=>beep(784,.2,'sine',.06),100)}};
+const muteBtn=document.getElementById('muteBtn');
+function setMute(m){muted=m;muteBtn.textContent=m?'Sound off':'Sound on';muteBtn.setAttribute('aria-pressed',m?'true':'false');if(m&&AC){AC.close();AC=null}}
+muteBtn.onclick=()=>setMute(!muted);
+
+/* save state */
+const SAVEKEY='sleeping-proof-v1';
+const fresh=()=>({room:0,spared:{},codex:{},read:{},intro:{},coffee:3,hp:20,stats:{asked:0,right:0},done:false});
+let ST=(()=>{try{return JSON.parse(localStorage.getItem(SAVEKEY))}catch(e){return null}})();
+const hasSave=!!ST;if(!ST)ST=fresh();
+function persist(){try{localStorage.setItem(SAVEKEY,JSON.stringify(ST))}catch(e){}}
+const MAXHP=20;
+
+/* room building */
+const VARIANTS=[[[5,4,2,1],[5,9,2,1],[11,2,1,3],[11,9,1,3]],[[4,5,1,1],[8,5,1,1],[4,9,1,1],[8,9,1,1],[11,3,2,1],[11,10,2,1]],[[7,2,1,2],[7,10,1,2],[10,5,3,1],[10,9,3,1]]];
+const SLOTS={stones:[[3,2],[9,2],[3,11],[9,11]],npcs:[[13,3],[13,10],[9,5]],journal:[6,10],save:[2,7]};
+function topicLesson(id){return id&&typeof LESSONS!=='undefined'?LESSONS[id]:null}
+let R=null;// current room runtime
+function buildRoom(i){const def=ROOMS[i];const map=[...Array(ROWS)].map((_,r)=>[...Array(COLS)].map((_,c)=>(r===0||c===0||r===ROWS-1||c===COLS-1)?1:0));
+  if(i>0)for(const r of[6,7,8])map[r][0]=0;if(i<ROOMS.length-1)for(const r of[6,7,8])map[r][COLS-1]=0;
+  for(const[x,y,w,h]of(def.blocks||VARIANTS[def.variant||0]))for(let yy=y;yy<y+h;yy++)for(let xx=x;xx<x+w;xx++)map[yy][xx]=1;
+  const ents=[];
+  if(def.ents)def.ents.forEach((e,k)=>ents.push({...e,key:def.id+':e'+k}));
+  else{const L=topicLesson(def.topic);
+    L.ideas.forEach((d,k)=>ents.push({t:'stone',x:SLOTS.stones[k][0],y:SLOTS.stones[k][1],idea:d,key:def.id+':s'+k}));
+    def.npcs.forEach((n,k)=>ents.push({t:'npc',...n,x:SLOTS.npcs[k][0],y:SLOTS.npcs[k][1],key:def.id+':n'+k}));
+    ents.push({t:'journal',x:SLOTS.journal[0],y:SLOTS.journal[1],lines:def.journal,name:'Journal: '+def.name,key:def.id+':j'});
+    ents.push({t:'save',x:SLOTS.save[0],y:SLOTS.save[1],key:def.id+':save'})}
+  ents.filter(e=>e.t==='stone'&&e.custom).forEach(e=>e.idea=e.custom);
+  ents.forEach(e=>{if(e.t==='journal')e.key=e.key||def.id+':j'});
+  const boss={x:16,y:7,...def.boss,t:'boss',key:def.id+':boss'};ents.push(boss);
+  // background constellation for the room
+  let seed=i*977+13;const rr=()=>(seed=(seed*16807)%2147483647)/2147483647;
+  const stars=[...Array(26)].map(()=>[TS+rr()*(CW-2*TS),OY+TS+rr()*(ROWS-2)*TS]);
+  R={i,def,map,ents,boss,stars};
+}
+const locked=()=>R.i<ROOMS.length-1&&!ST.spared[R.boss.id];
+function solidTile(c,r){if(c<0||r<0||c>=COLS||r>=ROWS)return false;if(R.map[r][c])return true;if(c===COLS-1&&r>=6&&r<=8&&locked())return true;return R.ents.some(e=>e.x===c&&e.y===r)}
+function blocked(px,py){const h=6;for(const[dx,dy]of[[-h,-h],[h,-h],[-h,h],[h,h]]){const c=Math.floor((px+dx)/TS),r=Math.floor((py+dy-OY)/TS);if(solidTile(c,r))return true}return false}
+
+/* player */
+const PL={x:0,y:0,face:'down',trail:[]};
+function placePlayer(side){if(side==='left'){PL.x=TS*1.5;PL.y=OY+TS*7.5}else if(side==='right'){PL.x=CW-TS*1.5;PL.y=OY+TS*7.5}else{PL.x=TS*4.5;PL.y=OY+TS*7.5}PL.trail=[]}
+
+/* dialogue */
+let DLG=null;
+function wrap(text,font,maxW){g.font=font;const out=[];for(const para of text.split('\n')){const words=para.split(' ');let cur='';for(const w of words){const t=cur?cur+' '+w:w;if(g.measureText(t).width>maxW&&cur){out.push(cur);cur=w}else cur=t}out.push(cur)}return out}
+function paginate(entries,maxW,per){const pages=[];for(const raw0 of entries){const raw=raw0.replace(/`/g,'');let who=null,text=raw;if(!raw.startsWith('* ')){const m=raw.match(/^([^:*]{1,30}): (.*)$/);if(m){who=m[1];text=m[2]}}
+  const lines=wrap(text,'16px '+MONO,maxW);for(let i=0;i<lines.length;i+=per)pages.push({who,lines:lines.slice(i,i+per),len:lines.slice(i,i+per).join('').length})}return pages}
+function say(entries,onEnd,opts={}){DLG={pages:paginate(entries,opts.w||548,opts.per||3),i:0,shown:0,onEnd,box:opts.box};}
+function updDialog(dt){const p=DLG.pages[DLG.i];if(!p){const f=DLG.onEnd;DLG=null;f&&f();return}
+  if(DLG.shown<p.len){const before=Math.floor(DLG.shown);DLG.shown+=1.5*dt*(held.b?4:1);if(Math.floor(DLG.shown/3)>Math.floor(before/3))sfx.blip()}
+  if(take('a')||take('b')){if(DLG.shown<p.len)DLG.shown=p.len;else{DLG.i++;DLG.shown=0;if(DLG.i>=DLG.pages.length){const f=DLG.onEnd;DLG=null;f&&f()}}}}
+function box(x,y,w,h,a=.95){g.fillStyle=`rgba(8,8,7,${a})`;g.fillRect(x,y,w,h);g.strokeStyle=yc(.95);g.lineWidth=2;g.strokeRect(x+1,y+1,w-2,h-2)}
+function drawPage(p,x,y,shown){let ty=y+26;if(p.who){g.font='italic 19px '+SERIF;g.fillStyle=yc(.62);g.fillText(p.who,x+20,ty);ty+=24}
+  g.font='16px '+MONO;g.fillStyle=yc(1);let left=shown;for(const ln of p.lines){if(left<=0)break;g.fillText(ln.slice(0,Math.floor(left)),x+20,ty);left-=ln.length;ty+=25}
+  if(shown>=p.len){g.fillStyle=yc(.5+.5*Math.sin(performance.now()/180));g.beginPath();const bx=x+566,by=y+(p.who?118:108);g.moveTo(bx-5,by-4);g.lineTo(bx+5,by-4);g.lineTo(bx,by+2);g.fill()}}
+function drawDialog(){if(!DLG)return;const p=DLG.pages[DLG.i];if(!p)return;const top=DLG.box==='top'||(S.mode==='world'&&PL.y>300);const y=top?OY+10:CH-146;box(24,y,592,136);drawPage(p,24,y,DLG.shown)}
+
+/* game state */
+const S={mode:'title',t:0,fade:0,fadeTo:null,menu:0,endPage:0};
+let B=null;
+function fadeThen(fn){S.fade=0.001;S.fadeTo=fn}
+function enterRoom(i,side){ST.room=i;buildRoom(i);placePlayer(side);S.mode='world';
+  if(!ST.intro[R.def.id]){ST.intro[R.def.id]=1;persist();setTimeout(()=>{if(!DLG)say(R.def.intro)},350)}
+  updateHUDLabel()}
+function updateHUDLabel(){document.getElementById('where').textContent=R?`${R.def.name} · ${R.def.sub}`:'Title'}
+
+/* codex */
+const codexEl=document.getElementById('codex');
+function codexKeyFor(e){return e.key}
+function allCodex(){const out=[];ROOMS.forEach((rd,i)=>{const items=[];
+  if(rd.ents)rd.ents.forEach((e,k)=>{const key=rd.id+':e'+k;if(e.codex)e.codex.forEach((c,j)=>items.push({key:key+':'+j,...c,kind:'Teacher: '+e.name}));if(e.t==='stone')items.push({key,t:e.custom.t,b:e.custom.b+' Example: '+e.custom.ex,kind:'Memory node'});if(e.t==='journal')items.push({key,t:e.name,b:e.lines.slice(1).join(' ').replace(/^\* /,'').replace(/\* /g,''),kind:'Story'})});
+  else{const L=topicLesson(rd.topic);L.ideas.forEach((d,k)=>items.push({key:rd.id+':s'+k,t:d.t,b:d.b.replace(/`/g,'')+' Example: '+d.ex.replace(/`/g,''),kind:'Memory node'}));
+    rd.npcs.forEach((n,k)=>n.codex.forEach((c,j)=>items.push({key:rd.id+':n'+k+':'+j,...c,kind:'Teacher: '+n.name})));
+    items.push({key:rd.id+':j',t:'Journal: '+rd.name,b:rd.journal.slice(1).join(' ').replace(/\* /g,''),kind:'Story'});
+    items.push({key:rd.id+':trap',t:'Common trap',b:L.trap.replace(/`/g,''),kind:'Learned by sparing '+rd.boss.name})}
+  out.push({room:rd,items})});return out}
+function unlock(key){if(!ST.codex[key]){ST.codex[key]=1;persist();toast('Added to Codex')}}
+function renderCodex(){const all=allCodex();let tot=0,got=0;const body=document.getElementById('codexBody');body.innerHTML='';
+  for(const{room,items}of all){if(!items.length)continue;const sec=document.createElement('section');sec.className='cx-sec';
+    const n=items.filter(it=>ST.codex[it.key]).length;tot+=items.length;got+=n;
+    sec.innerHTML=`<h3>${room.name} <span>${room.sub} · ${n}/${items.length}</span></h3>`;
+    for(const it of items){const d=document.createElement('div');d.className='cx-item'+(ST.codex[it.key]?'':' locked');
+      d.innerHTML=ST.codex[it.key]?`<span class="cx-kind">${esc(it.kind)}</span><b>${esc(it.t)}</b><p>${esc(it.b)}</p>`:`<span class="cx-kind">${esc(it.kind.startsWith('Teacher')?'Teacher':it.kind.startsWith('Learned')?'Guardian':it.kind)}</span><b>Not found yet</b><p>Explore ${esc(room.name)} to find this.</p>`;sec.append(d)}
+    body.append(sec)}
+  document.getElementById('codexCount').textContent=`${got} of ${tot} entries found`}
+let cxTab='found',gxCat='all',gxQ='';
+function renderGlossTab(){const body=document.getElementById('codexBody');body.innerHTML='';
+  const tools=document.createElement('div');tools.className='gx-tools';
+  const q=document.createElement('input');q.className='gx-q';q.type='search';q.placeholder='Search every term, principle and example…';q.value=gxQ;q.setAttribute('aria-label','Search the glossary');
+  const chips=document.createElement('div');chips.className='gx-chips';
+  [['all','All']].concat(TOPICS.map(t=>[t.id,t.name])).forEach(([id,n])=>{const b=document.createElement('button');b.textContent=n;b.setAttribute('aria-pressed',String(gxCat===id));b.onclick=()=>{gxCat=id;renderGlossTab()};chips.append(b)});
+  tools.append(q,chips);body.append(tools);const list=document.createElement('div');body.append(list);
+  const draw=()=>{list.innerHTML='';const s=gxQ.trim().toLowerCase();let n=0;
+    TOPICS.forEach(t=>{if(gxCat!=='all'&&gxCat!==t.id)return;const terms=(GLOSSARY[t.id]||[]).filter(e=>!s||(e.t+' '+e.d+' '+(e.ex||'')).toLowerCase().includes(s));if(!terms.length)return;n+=terms.length;
+      const sec=document.createElement('section');sec.className='cx-sec';sec.innerHTML=`<h3>${esc(t.name)} <span>${terms.length} terms</span></h3>`;
+      terms.forEach(e=>{const d=document.createElement('div');d.className='cx-item';d.innerHTML=`<b>${esc(e.t)}</b><p>${esc(e.d)}</p>${e.ex?`<p class="gx-ex">${esc(e.ex)}</p>`:''}`;sec.append(d)});list.append(sec)});
+    if(!n)list.innerHTML='<p style="color:var(--text-3);text-align:center;padding:24px 0">No terms match.</p>';
+    document.getElementById('codexCount').textContent=`${n} glossary entries · always open`};
+  q.oninput=()=>{gxQ=q.value;draw()};draw()}
+function renderCx(){document.getElementById('tabFound').setAttribute('aria-selected',String(cxTab==='found'));document.getElementById('tabGloss').setAttribute('aria-selected',String(cxTab==='gloss'));cxTab==='gloss'?renderGlossTab():renderCodex()}
+document.getElementById('tabFound').onclick=()=>{cxTab='found';renderCx()};document.getElementById('tabGloss').onclick=()=>{cxTab='gloss';renderCx()};
+function openCodex(){renderCx();codexEl.showModal?codexEl.showModal():codexEl.setAttribute('open','')}
+function closeCodex(){codexEl.close?codexEl.close():codexEl.removeAttribute('open')}
+function toggleCodex(){codexEl.open?closeCodex():openCodex()}
+document.getElementById('codexBtn').onclick=toggleCodex;document.getElementById('codexClose').onclick=closeCodex;
+let toastT=0,toastMsg='';function toast(m){toastMsg=m;toastT=110}
+
+/* interactions */
+function nearEnt(){let best=null,bd=40;for(const e of R.ents){const ex=e.x*TS+TS/2,ey=OY+e.y*TS+TS/2;const d=Math.hypot(ex-PL.x,ey-PL.y);if(d<bd){bd=d;best=e}}return best}
+function interact(e){
+  if(e.t==='save'){ST.hp=MAXHP;ST.coffee=3;persist();sfx.save();say(['* A save node hums. Your signal steadies.','* HP restored. Coffee refilled (3). Progress saved.']);return}
+  if(e.t==='stone'){const d=e.idea;say(['* A memory node glows. It holds a lecture she once gave.',`* ${d.t}.`,'* '+d.b,'* Example: '+d.ex],()=>unlock(e.key));return}
+  if(e.t==='npc'){say(e.lines,()=>{if(e.codex)e.codex.forEach((c,j)=>unlock(e.key+':'+j));ST.read[e.key]=1;persist()});return}
+  if(e.t==='journal'){say(e.lines,()=>unlock(e.key));return}
+  if(e.t==='boss'){if(ST.spared[e.id]){say(e.post.length?e.post:['* It is quiet now.']);return}say(e.pre,()=>startBattle(e))}
+}
+
+/* world update/draw */
+function updWorld(dt){
+  if(DLG){updDialog(dt);return}
+  if(take('c')){openCodex();return}
+  let dx=(held.right?1:0)-(held.left?1:0),dy=(held.down?1:0)-(held.up?1:0);
+  if(dx||dy){const l=Math.hypot(dx,dy),sp=2.5*dt;const nx=PL.x+dx/l*sp,ny=PL.y+dy/l*sp;if(!blocked(nx,PL.y))PL.x=nx;if(!blocked(PL.x,ny))PL.y=ny;
+    PL.face=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');PL.trail.push([PL.x,PL.y]);if(PL.trail.length>14)PL.trail.shift()}
+  else if(PL.trail.length)PL.trail.shift();
+  if(PL.x<4&&R.i>0){fadeThen(()=>enterRoom(R.i-1,'right'));PL.x=6}
+  if(PL.x>CW-4&&R.i<ROOMS.length-1){fadeThen(()=>enterRoom(R.i+1,'left'));PL.x=CW-6}
+  if(take('a')){const e=nearEnt();if(e)interact(e)}
+}
+function drawFloorAndWalls(t){
+  // constellation
+  g.strokeStyle=yc(.04);g.lineWidth=1;g.beginPath();for(let i=0;i<R.stars.length;i++){const a=R.stars[i],b=R.stars[(i*7+3)%R.stars.length];g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1])}g.stroke();
+  for(const[x,y]of R.stars){g.fillStyle=yc(.08);g.beginPath();g.arc(x,y,2,0,6.283);g.fill()}
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const x=c*TS,y=OY+r*TS;
+    if(R.map[r][c]){g.fillStyle=yc(.035);g.fillRect(x,y,TS,TS);g.strokeStyle=yc(.5);g.lineWidth=1.2;g.beginPath();
+      if(r>0&&!R.map[r-1][c]){g.moveTo(x,y+.5);g.lineTo(x+TS,y+.5)}if(r<ROWS-1&&!R.map[r+1][c]){g.moveTo(x,y+TS-.5);g.lineTo(x+TS,y+TS-.5)}
+      if(c>0&&!R.map[r][c-1]){g.moveTo(x+.5,y);g.lineTo(x+.5,y+TS)}if(c<COLS-1&&!R.map[r][c+1]){g.moveTo(x+TS-.5,y);g.lineTo(x+TS-.5,y+TS)}g.stroke();
+      // hatch
+      g.strokeStyle=yc(.05);g.beginPath();g.moveTo(x+8,y+TS-4);g.lineTo(x+TS-4,y+8);g.stroke()}
+    else{g.fillStyle=yc(.07);g.fillRect(x+TS/2-.75,y+TS/2-.75,1.5,1.5)}}
+  if(locked()){const x=CW-TS/2;g.setLineDash([4,5]);g.strokeStyle=yc(.45+.25*Math.sin(t/300));g.lineWidth=2;g.beginPath();g.moveTo(x,OY+6*TS);g.lineTo(x,OY+9*TS);g.stroke();g.setLineDash([])}
+}
+function drawEnt(e,t){const cx=e.x*TS+TS/2,cy=OY+e.y*TS+TS/2;
+  if(e.t==='stone'){const read=ST.codex[e.key];const p=read?.35:.6+.4*Math.sin(t/400+e.x);g.fillStyle=yc(.08*p);g.beginPath();g.arc(cx,cy,16,0,6.283);g.fill();g.strokeStyle=yc(.9*p+.1);g.lineWidth=1.3;g.beginPath();g.moveTo(cx,cy-9);g.lineTo(cx+7,cy);g.lineTo(cx,cy+9);g.lineTo(cx-7,cy);g.closePath();g.stroke();g.fillStyle=yc(read?.25:.7);g.beginPath();g.arc(cx,cy,2,0,6.283);g.fill();return}
+  if(e.t==='save'){const a=t/700;g.strokeStyle=yc(.85);g.lineWidth=1.3;g.beginPath();for(let k=0;k<8;k++){const r=k%2?4:11,an=a+k*Math.PI/4;g[k?'lineTo':'moveTo'](cx+Math.cos(an)*r,cy+Math.sin(an)*r)}g.closePath();g.stroke();g.fillStyle=yc(.12+.08*Math.sin(t/300));g.beginPath();g.arc(cx,cy,15,0,6.283);g.fill();return}
+  if(e.t==='journal'){g.save();g.translate(cx,cy+Math.sin(t/600)*1.5);g.rotate(-.12);g.fillStyle='rgba(8,8,7,.9)';g.fillRect(-8,-10,16,20);g.strokeStyle=yc(ST.codex[e.key]?.4:.9);g.lineWidth=1.2;g.strokeRect(-8,-10,16,20);g.beginPath();for(let k=0;k<4;k++){g.moveTo(-5,-5+k*4);g.lineTo(5,-5+k*4)}g.lineWidth=.8;g.stroke();g.restore();return}
+  const big=e.t==='boss',r=big?16:12,bob=Math.sin(t/500+e.x)*2;const calm=big&&ST.spared[e.id];
+  g.fillStyle='rgba(8,8,7,.92)';g.beginPath();g.arc(cx,cy+bob,r,0,6.283);g.fill();g.strokeStyle=yc(.9);g.lineWidth=1.4;if(calm)g.setLineDash([3,3]);g.stroke();g.setLineDash([]);
+  if(big&&!calm){g.strokeStyle=yc(.3);g.beginPath();g.arc(cx,cy+bob,r+5+Math.sin(t/300)*1.5,0,6.283);g.stroke()}
+  g.fillStyle=yc(1);const s=e.flicker?e.flicker[Math.floor(t/500)%2]:e.sym;g.font=(s.length>2?'11px ':s.length>1?'13px ':big?'20px ':'16px ')+(s.length>1?MONO:SERIF);g.textAlign='center';g.textBaseline='middle';g.fillText(s,cx,cy+bob+1);g.textAlign='left';g.textBaseline='alphabetic';
+}
+function drawPlayer(t){PL.trail.forEach(([x,y],i)=>{g.fillStyle=yc(i/PL.trail.length*.18);g.beginPath();g.arc(x,y,2+i/PL.trail.length*2,0,6.283);g.fill()});
+  const gr=g.createRadialGradient(PL.x,PL.y,0,PL.x,PL.y,18);gr.addColorStop(0,yc(.45));gr.addColorStop(1,yc(0));g.fillStyle=gr;g.beginPath();g.arc(PL.x,PL.y,18,0,6.283);g.fill();
+  g.fillStyle=yc(1);g.beginPath();g.arc(PL.x,PL.y,5.5+Math.sin(t/200)*.5,0,6.283);g.fill();
+  const off={up:[0,-9],down:[0,9],left:[-9,0],right:[9,0]}[PL.face];g.fillStyle=yc(.7);g.beginPath();g.arc(PL.x+off[0],PL.y+off[1],1.5,0,6.283);g.fill()}
+function drawHUD(t){g.fillStyle='rgba(8,8,7,.9)';g.fillRect(0,0,CW,OY);g.strokeStyle=yc(.2);g.beginPath();g.moveTo(0,OY-.5);g.lineTo(CW,OY-.5);g.stroke();
+  g.font='italic 19px '+SERIF;g.fillStyle=yc(1);g.fillText(R.def.name,14,22);const w=g.measureText(R.def.name).width;g.font='11px '+MONO;g.fillStyle=yc(.5);g.fillText(R.def.sub.toUpperCase(),24+w,21);
+  g.textAlign='right';g.fillStyle=yc(.85);g.fillText(`HP ${ST.hp}/${MAXHP}   COFFEE ${ST.coffee}   ${Object.keys(ST.spared).length}/11 SPARED`,CW-14,21);g.textAlign='left';
+  const e=!DLG&&nearEnt();if(e){const cx=e.x*TS+TS/2,cy=OY+e.y*TS-6;g.fillStyle='rgba(8,8,7,.9)';g.fillRect(cx-11,cy-17,22,17);g.strokeStyle=yc(.8);g.lineWidth=1;g.strokeRect(cx-11,cy-17,22,17);g.fillStyle=yc(1);g.font='11px '+MONO;g.textAlign='center';g.fillText('Z',cx,cy-5);g.textAlign='left'}
+  if(R.i===0&&!DLG&&!ST.spared.echo){g.font='12px '+MONO;g.fillStyle=yc(.45);g.textAlign='center';g.fillText('arrows / WASD move · Z talk · X back · C codex',CW/2,CH-10);g.textAlign='left'}
+}
+function drawWorld(t){drawFloorAndWalls(t);R.ents.forEach(e=>drawEnt(e,t));drawPlayer(t);drawHUD(t);drawDialog()}
+
+/* battle */
+function startBattle(e){
+  const def=e;const topic=R.def.topic;let pool;
+  if(def.qs)pool=def.qs.slice();else if(topic==='all')pool=TOPICS.flatMap(t=>t.qs);else pool=TOPICS.find(t=>t.id===topic).qs.slice();
+  const gens=topic==='all'?TOPICS.flatMap(t=>t.gen||[]):topic?(TOPICS.find(t=>t.id===topic)?.gen||[]):[];
+  B={def,pool:shuffle(pool),gens,used:0,resolve:0,need:def.need,phase:'queue',queue:[],menu:0,sel:0,q:null,soul:{x:320,y:322},bul:[],dodge:null,inv:0,boxR:{x:32,y:250,w:576,h:140},ready:false,askI:0,shake:0,spareFlash:0,diff:(def.diff||(.62+R.i*.07))};
+  sfx.sel();S.mode='battle';
+  B.queue=def.intro.map(x=>({type:'text',text:x}));
+}
+function nextQ(){if(B.gens.length&&Math.random()<.55)return pick(B.gens)();if(!B.pool.length)B.pool=shuffle(B.def.qs||(R.def.topic==='all'?TOPICS.flatMap(t=>t.qs):TOPICS.find(t=>t.id===R.def.topic).qs));return B.pool.pop()}
+function pushText(arr){arr.forEach(x=>B.queue.push({type:'text',text:x}))}
+function pushDodge(mult){B.queue.push({type:'dodge',mult})}
+function runQueue(){const step=B.queue.shift();if(!step){B.phase='menu';return}
+  if(step.type==='text'){B.phase='text';say([step.text],runQueue,{box:'battle'})}
+  else if(step.type==='dodge'){startDodge(step.mult)}
+  else if(step.type==='call'){step.fn();runQueue()}}
+function startDodge(mult){B.phase='dodge';const d=B.diff*mult;B.dodge={t:0,dur:Math.round(260*Math.min(1.25,.8+mult*.3)),d,pat:pick(B.def.pat),spawn:0};B.soul={x:320,y:322};B.bul=[];
+  if(B.dodge.pat==='bounce'){const n=2+Math.round(d*2.5);for(let k=0;k<n;k++)B.bul.push(mkBul(220+Math.random()*200,262+Math.random()*30,(Math.random()<.5?-1:1)*(1+Math.random()*d),.8+Math.random()*d,'b'))}}
+function mkBul(x,y,vx,vy,kind){return{x,y,vx,vy,kind,ch:pick(B.def.glyphs)}}
+const DB={x:220,y:262,w:200,h:120};
+function updDodge(dt){const D=B.dodge;D.t+=dt;const d=D.d;
+  let dx=(held.right?1:0)-(held.left?1:0),dy=(held.down?1:0)-(held.up?1:0);if(dx||dy){const l=Math.hypot(dx,dy);B.soul.x+=dx/l*2.6*dt;B.soul.y+=dy/l*2.6*dt}
+  B.soul.x=Math.max(DB.x+7,Math.min(DB.x+DB.w-7,B.soul.x));B.soul.y=Math.max(DB.y+7,Math.min(DB.y+DB.h-7,B.soul.y));
+  D.spawn-=dt;const P=D.pat;
+  if(D.t<D.dur-40&&D.spawn<=0){
+    if(P==='rain'){B.bul.push(mkBul(DB.x+8+Math.random()*(DB.w-16),DB.y-12,0,1.2+Math.random()*1.1*d));D.spawn=Math.max(7,20/d)}
+    else if(P==='sweep'){const L=Math.random()<.5,gap=Math.floor(Math.random()*5);for(let k=0;k<6;k++)if(k!==gap&&k!==gap+1)B.bul.push(mkBul(L?DB.x-12:DB.x+DB.w+12,DB.y+10+k*20,(L?1:-1)*(1.3+d*.9),0));D.spawn=Math.max(28,62/d)}
+    else if(P==='ring'){const n=9,gap=Math.floor(Math.random()*n),cx=B.soul.x,cy=B.soul.y;for(let k=0;k<n;k++){if(k===gap)continue;const a=k/n*6.283;B.bul.push(mkBul(cx+Math.cos(a)*120,cy+Math.sin(a)*120,-Math.cos(a)*(.9+d*.5),-Math.sin(a)*(.9+d*.5)))}D.spawn=Math.max(55,105/d)}
+    else if(P==='aimed'){const sx=DB.x+Math.random()*DB.w,sy=DB.y-14,a=Math.atan2(B.soul.y-sy,B.soul.x-sx),v=1.5+d;B.bul.push(mkBul(sx,sy,Math.cos(a)*v,Math.sin(a)*v));D.spawn=Math.max(14,34/d)}
+    else if(P==='bounce'){if(D.t>1)B.bul.push(mkBul(DB.x+DB.w/2,DB.y+6,(Math.random()-.5)*3*d,1+Math.random()*d,'b'));D.spawn=Math.max(70,130/d)}}
+  for(const b of B.bul){b.x+=b.vx*dt;b.y+=b.vy*dt;if(b.kind==='b'){if(b.x<DB.x+5||b.x>DB.x+DB.w-5)b.vx*=-1;if(b.y<DB.y+5||b.y>DB.y+DB.h-5)b.vy*=-1;b.x=Math.max(DB.x+5,Math.min(DB.x+DB.w-5,b.x));b.y=Math.max(DB.y+5,Math.min(DB.y+DB.h-5,b.y))}}
+  B.bul=B.bul.filter(b=>b.x>DB.x-40&&b.x<DB.x+DB.w+40&&b.y>DB.y-40&&b.y<DB.y+DB.h+40);
+  if(B.inv>0)B.inv-=dt;else for(const b of B.bul){if(Math.hypot(b.x-B.soul.x,b.y-B.soul.y)<9){ST.hp=Math.max(0,ST.hp-(2+Math.round(B.diff*1.5)));B.inv=50;sfx.hit();B.shake=10;break}}
+  if(ST.hp<=0){B.phase='dead';B.bul=[];return}
+  if(D.t>=D.dur){B.bul=[];runQueue()}}
+function answer(i){const q=B.q,ok=B.order[i]===0;ST.stats.asked++;if(ok)ST.stats.right++;
+  const chosen=q.o[B.order[i]].replace(/`/g,'');
+  const ex='* '+(q.w||'').replace(/`/g,'');
+  if(ok){sfx.ok();window.bgFire&&window.bgFire(1.2);B.resolve=Math.min(B.need,B.resolve+1);pushText(['* You reason: '+chosen,pick(B.def.right),ex]);pushDodge(.55)}
+  else{sfx.no();B.shake=12;pushText(['* You reason: '+chosen,pick(B.def.wrong),'* The right answer was: '+q.o[0].replace(/`/g,''),ex]);pushDodge(1)}
+  if(ok&&B.resolve>=B.need&&!B.ready){B.ready=true;B.queue.push({type:'text',text:`* ${B.def.name} understands now. MERCY is ready.`})}
+  persist();runQueue()}
+function updBattle(dt){if(B.shake>0)B.shake-=dt;
+  if(B.phase==='queue'){runQueue();return}
+  if(B.phase==='text'){if(DLG)updDialog(dt);return}
+  if(B.phase==='dodge'){updDodge(dt);return}
+  if(B.phase==='dead'){if(take('a')){ST.hp=MAXHP;B.phase='queue';B.queue=[{type:'text',text:'* The signal steadies. It remembers everything it learned.'}];persist()}return}
+  if(B.phase==='menu'){if(take('left')){B.menu=(B.menu+3)%4;sfx.blip()}if(take('right')){B.menu=(B.menu+1)%4;sfx.blip()}
+    if(take('c')){openCodex();return}
+    if(take('a')){sfx.sel();const m=B.menu;
+      if(m===0){B.q=nextQ();B.order=shuffle(B.q.o.map((_,k)=>k));B.sel=0;B.phase='question'}
+      else if(m===1){pushText([B.def.asks[B.askI++%B.def.asks.length]]);pushDodge(.7);runQueue()}
+      else if(m===2){if(ST.coffee>0){ST.coffee--;ST.hp=Math.min(MAXHP,ST.hp+10);pushText(['* You drink a cold coffee. The thought sharpens. +10 HP.']);pushDodge(.6)}else pushText(['* No coffee left. Save nodes refill it.']);runQueue()}
+      else{if(B.ready){pushText(B.def.spare);B.queue.push({type:'call',fn:winBattle});runQueue()}else{pushText([B.def.notyet,`* Understanding: ${B.resolve} of ${B.need}. Keep reasoning.`]);pushDodge(.8);runQueue()}}}
+    return}
+  if(B.phase==='question'){const n=B.order.length;if(take('up')){B.sel=(B.sel+n-1)%n;sfx.blip()}if(take('down')){B.sel=(B.sel+1)%n;sfx.blip()}
+    if(take('b')){B.phase='menu';return}if(take('a')){answer(B.sel)}}}
+function winBattle(){const id=B.def.id;ST.spared[id]=1;unlock(R.def.id+':trap');persist();window.bgFire&&window.bgFire(3);
+  if(id==='sleeper'){fadeThen(()=>{S.mode='ending';S.endPage=0;B=null});B.phase='done';return}
+  B.phase='done';fadeThen(()=>{S.mode='world';B=null;say([`* The way forward is open.`])})}
+
+function drawEnemy(t){const d=B.def,cx=320+(B.shake>0?Math.sin(t/20)*B.shake*.6:0),cy=B.phase==='question'?96:118,n=d.orbit||7,R0=B.phase==='question'?54:66;
+  const calm=B.ready;const pts=[];for(let k=0;k<n;k++){let a=k/n*6.283+t*.0004*(calm?.3:1)*(k%2?1:-1),r=R0+Math.sin(t*.002+k)*6;if(d.lone&&k===0){r=R0+34;a=-.6}pts.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r*.8])}
+  g.strokeStyle=yc(.16);g.lineWidth=1;g.beginPath();pts.forEach(([x,y],k)=>{if(d.lone&&k===0&&!calm)return;g.moveTo(cx,cy);g.lineTo(x,y);const q=pts[(k+1)%n];g.moveTo(x,y);g.lineTo(q[0],q[1])});g.stroke();
+  if(d.bridges){g.strokeStyle=yc(.35);g.beginPath();for(let k=0;k<n;k+=2){const a=pts[k],b=pts[(k+3)%n];g.moveTo(a[0],a[1]);g.quadraticCurveTo(cx,cy-40,b[0],b[1])}g.stroke()}
+  pts.forEach(([x,y])=>{g.fillStyle=yc(.85);g.beginPath();g.arc(x,y,3.5,0,6.283);g.fill()});
+  const gr=g.createRadialGradient(cx,cy,0,cx,cy,60);gr.addColorStop(0,yc(calm?.22:.12));gr.addColorStop(1,yc(0));g.fillStyle=gr;g.beginPath();g.arc(cx,cy,60,0,6.283);g.fill();
+  g.fillStyle='rgba(8,8,7,.95)';g.beginPath();g.arc(cx,cy,34,0,6.283);g.fill();g.strokeStyle=yc(.95);g.lineWidth=1.6;g.stroke();
+  let s=d.flicker?d.flicker[Math.floor(t/(calm?99999:420))%2]:d.sym;if(d.dice&&!calm)s=['½','⅙','⅓','¼'][Math.floor(t/350)%4];
+  g.fillStyle=yc(1);g.textAlign='center';g.textBaseline='middle';g.font=(s.length>1?'26px ':'40px ')+SERIF;
+  if(d.ghost&&!calm){g.fillStyle=yc(.35);g.fillText(s,cx+5,cy+3);g.fillStyle=yc(1)}
+  if(d.mirror&&!calm){g.save();g.translate(cx,cy);g.scale(-1,1);g.fillStyle=yc(.3);g.fillText(s,0,8);g.restore();g.fillStyle=yc(1)}
+  if(d.eye){const open=B.resolve/B.need;g.strokeStyle=yc(1);g.lineWidth=1.6;g.beginPath();g.ellipse(cx,cy,18,1+open*10,0,0,6.283);g.stroke();g.beginPath();g.arc(cx,cy,Math.max(.5,open*5),0,6.283);g.fill()}
+  else g.fillText(s,cx,cy+2);
+  g.textBaseline='alphabetic';g.font='italic 18px '+SERIF;g.fillStyle=yc(.8);g.fillText(d.name,cx,cy+(B.phase==='question'?78:96));g.textAlign='left';
+  // understanding meter
+  const mw=120,mx=cx-mw/2,my=cy+(B.phase==='question'?86:104);if(B.phase!=='question'){for(let k=0;k<B.need;k++){const x=mx+k*(mw/(B.need-1||1));g.strokeStyle=yc(.6);g.lineWidth=1;g.beginPath();g.arc(x,my+6,4,0,6.283);if(k<B.resolve){g.fillStyle=yc(1);g.fill()}g.stroke()}}
+}
+/* question layout: shrink the type until the question and all four options fit inside the box */
+function layoutQ(q){if(q.__L)return q.__L;let L;for(const[qf,of,qh,oh,gap]of[[15,14,21,19,8],[14,13,19,17,6],[13,12,17,15,5],[12,11,15,13,4]]){
+    const ql=wrap(q.q.replace(/`/g,''),qf+'px '+MONO,552),ol=q.o.map(o=>wrap(o.replace(/`/g,''),of+'px '+MONO,500));
+    const h=ql.length*qh+gap+ol.reduce((a,l)=>a+l.length*oh+gap,0);L={qf,of,qh,oh,gap,ql,ol,h};if(212+h-qh<=384)break}
+  return q.__L=L}
+function drawBattle(t){
+  drawEnemy(t);
+  const ph=B.phase;
+  if(ph==='question'){const q=B.q,L=layoutQ(q);box(24,186,592,214);let y=212;g.font=L.qf+'px '+MONO;g.fillStyle=yc(1);L.ql.forEach(l=>{g.fillText(l,44,y);y+=L.qh});y+=L.gap;
+    B.order.forEach((oi,k)=>{const lines=L.ol[oi];const sel=k===B.sel;if(sel){g.fillStyle=yc(.08);g.fillRect(36,y-L.of-1,568,lines.length*L.oh+6)}
+      g.fillStyle=yc(sel?1:.6);g.font=L.of+'px '+MONO;lines.forEach((l,j)=>g.fillText(l,82,y+j*L.oh));if(sel)drawSoul(60,y-5,t);else{g.fillStyle=yc(.4);g.fillText('ABCD'[k],56,y)}y+=lines.length*L.oh+L.gap});
+    g.font='11px '+MONO;g.fillStyle=yc(.4);g.fillText('↑ ↓ choose · Z answer · X back',44,393)}
+  else if(ph==='dodge'||ph==='dead'){g.save();g.fillStyle='rgba(8,8,7,.95)';g.fillRect(DB.x,DB.y,DB.w,DB.h);g.strokeStyle=yc(.95);g.lineWidth=2;g.strokeRect(DB.x+1,DB.y+1,DB.w-2,DB.h-2);
+    g.beginPath();g.rect(DB.x+2,DB.y+2,DB.w-4,DB.h-4);g.clip();g.font='15px '+MONO;g.textAlign='center';g.textBaseline='middle';
+    for(const b of B.bul){g.fillStyle=yc(.95);g.fillText(b.ch,b.x,b.y)}g.textAlign='left';g.textBaseline='alphabetic';g.restore();
+    if(ph==='dodge'){if(!(B.inv>0&&Math.floor(t/60)%2))drawSoul(B.soul.x,B.soul.y,t);g.font='11px '+MONO;g.fillStyle=yc(.4);g.textAlign='center';g.fillText('dodge!',320,DB.y+DB.h+16);g.textAlign='left'}
+    else{box(120,200,400,140);g.font='italic 28px '+SERIF;g.fillStyle=yc(1);g.textAlign='center';g.fillText('The signal flickers.',320,250);g.font='14px '+MONO;g.fillStyle=yc(.75);g.fillText('But it remembers everything it learned.',320,282);g.fillText('Press Z to steady it.',320,310);g.textAlign='left'}}
+  else{box(24,250,592,140);if(DLG&&DLG.pages[DLG.i]){drawPage(DLG.pages[DLG.i],24,250,DLG.shown)}
+    else if(ph==='menu'){g.font='16px '+MONO;g.fillStyle=yc(1);const lines=wrap(B.ready?`* ${B.def.name} is ready to be spared.`:`* ${B.def.name} is waiting. Understanding: ${B.resolve} of ${B.need}.`,'16px '+MONO,548);lines.forEach((l,k)=>g.fillText(l,44,282+k*25))}}
+  // HP + menu
+  g.font='13px '+MONO;g.fillStyle=yc(1);g.fillText('SPARK',32,423);g.fillText('HP',110,423);g.strokeStyle=yc(.7);g.lineWidth=1;g.strokeRect(134,412,100,13);g.fillStyle=yc(.9);g.fillRect(136,414,96*ST.hp/MAXHP,9);g.fillStyle=yc(1);g.fillText(`${ST.hp}/${MAXHP}`,244,423);
+  g.fillStyle=yc(.55);g.fillText(`coffee ${ST.coffee}`,320,423);
+  const labels=['REASON','ASK','ITEM',B.ready?'MERCY ✦':'MERCY'];labels.forEach((l,k)=>{const x=24+k*150,y=434,w=138,h=36,sel=ph==='menu'&&B.menu===k;
+    g.strokeStyle=k===3&&B.ready?GOOD:yc(sel?1:.55);g.lineWidth=sel?2:1.2;g.strokeRect(x+.5,y+.5,w,h);if(sel){g.fillStyle=yc(.1);g.fillRect(x+1,y+1,w-1,h-1)}
+    g.font='14px '+MONO;g.fillStyle=k===3&&B.ready?GOOD:yc(sel?1:.7);g.textAlign='center';g.fillText(l,x+w/2+(sel?8:0),y+23);g.textAlign='left';if(sel)drawSoul(x+18,y+18,t)});
+}
+function drawSoul(x,y,t){g.fillStyle=yc(.25);g.beginPath();g.arc(x,y,9,0,6.283);g.fill();g.fillStyle=yc(1);g.beginPath();g.moveTo(x,y-6);g.lineTo(x+5,y);g.lineTo(x,y+6);g.lineTo(x-5,y);g.closePath();g.fill()}
+
+/* title + ending */
+function titleItems(){return hasSave&&ST.room>0||hasSave&&Object.keys(ST.codex).length?['Continue','Begin again']:['Begin']}
+function updTitle(){const it=titleItems();if(take('up')||take('left')){S.menu=(S.menu+it.length-1)%it.length;sfx.blip()}if(take('down')||take('right')){S.menu=(S.menu+1)%it.length;sfx.blip()}
+  if(take('a')){sfx.sel();const ch=it[S.menu]||it[0];if(ch==='Begin again'){ST=fresh();persist()}if(ch!=='Continue'&&ch!=='Begin'){}fadeThen(()=>enterRoom(ST.room,ST.room?'left':'start'))}}
+function drawTitle(t){g.textAlign='center';g.font='12px '+MONO;g.fillStyle=yc(.5);g.fillText('A  DISCRETE  MATHEMATICS  STORY',320,150);
+  g.font='64px '+SERIF;g.fillStyle=yc(1);g.fillText('The Sleeping',320,222);g.font='italic 64px '+SERIF;g.fillStyle=yc(.8);g.fillText('Proof',320,282);
+  g.font='14px '+MONO;g.fillStyle=yc(.65);g.fillText('A mathematician stopped believing in her own mind.',320,326);g.fillText('You are the last thought still moving through it.',320,348);
+  titleItems().forEach((s,k)=>{const y=398+k*30,sel=k===S.menu;g.font=(sel?'italic 24px ':'22px ')+SERIF;g.fillStyle=yc(sel?1:.5);g.fillText(s,320,y);if(sel){const w=g.measureText(s).width;drawSoul(320-w/2-20,y-7,t)}});
+  g.font='11px '+MONO;g.fillStyle=yc(.35);g.fillText('Z or tap to choose · arrows to move',320,462);g.textAlign='left'}
+function updEnding(){if(take('a')){S.endPage++;sfx.blip();if(S.endPage>ENDING.length+1){ST.done=true;persist();S.mode='title';S.menu=0}}}
+function drawEnding(t){g.textAlign='center';if(S.endPage<ENDING.length){const lines=wrap(ENDING[S.endPage],'italic 26px '+SERIF,500);g.font='italic 26px '+SERIF;g.fillStyle=yc(1);lines.forEach((l,k)=>g.fillText(l,320,220+k*34-lines.length*17))}
+  else if(S.endPage===ENDING.length){g.font='72px '+SERIF;g.fillStyle=yc(1);g.fillText('The End',320,220);g.font='italic 24px '+SERIF;g.fillStyle=yc(.75);g.fillText('Thank you for reasoning.',320,262)}
+  else{const got=allCodex().flatMap(x=>x.items).filter(it=>ST.codex[it.key]).length,acc=ST.stats.asked?Math.round(100*ST.stats.right/ST.stats.asked):0;g.font='italic 30px '+SERIF;g.fillStyle=yc(1);g.fillText('What you carried',320,170);g.font='15px '+MONO;g.fillStyle=yc(.8);
+    [`Guardians spared: 11 of 11`,`Questions reasoned through: ${ST.stats.asked}`,`Answered correctly: ${ST.stats.right} (${acc}%)`,`Codex entries found: ${got}`,'','Your Codex stays open: press C any time to review.'].forEach((l,k)=>g.fillText(l,320,220+k*28))}
+  g.font='11px '+MONO;g.fillStyle=yc(.4);g.fillText('Z to continue',320,462);g.textAlign='left'}
+
+/* main loop */
+let last=performance.now();
+function frame(now){const dt=Math.min(3,(now-last)/16.67);last=now;S.t=now;
+  if(take('m'))setMute(!muted);
+  if(S.fade>0){S.fade+=.06*dt;if(S.fade>=1&&S.fadeTo){const f=S.fadeTo;S.fadeTo=null;f();S.fade=-1}}
+  else if(S.fade<0){S.fade+=.06*dt;if(S.fade>=0)S.fade=0}
+  if(!codexEl.open&&S.fade===0){if(S.mode==='title')updTitle();else if(S.mode==='world')updWorld(dt);else if(S.mode==='battle')updBattle(dt);else if(S.mode==='ending')updEnding()}
+  g.clearRect(0,0,CW,CH);g.fillStyle='rgba(10,10,9,.84)';g.fillRect(0,0,CW,CH);
+  if(S.mode==='title')drawTitle(now);else if(S.mode==='world')drawWorld(now);else if(S.mode==='battle'){drawBattle(now)}else if(S.mode==='ending')drawEnding(now);
+  if(toastT>0){toastT-=dt;g.font='12px '+MONO;const w=g.measureText(toastMsg).width+24;g.fillStyle='rgba(8,8,7,.92)';g.fillRect(CW-w-12,OY+10,w,26);g.strokeStyle=GOOD;g.strokeRect(CW-w-12+.5,OY+10.5,w-1,25);g.fillStyle=GOOD;g.fillText(toastMsg,CW-w,OY+27)}
+  const fa=S.fade>0?S.fade:S.fade<0?-S.fade:0;if(fa>0){g.fillStyle=`rgba(8,8,7,${Math.min(1,fa)})`;g.fillRect(0,0,CW,CH)}
+  for(const k in pressed)pressed[k]=false;
+  requestAnimationFrame(frame)}
+(document.fonts?document.fonts.ready:Promise.resolve()).then(()=>requestAnimationFrame(frame));
+window.__game={layoutQ,S,get B(){return B},get R(){return R},get DLG(){return DLG},ST:()=>ST,press,held,PL,codexEl,enterRoom,startBattle,nextQ:()=>nextQ()};
+
+/* ---------- background: grain, brain, network ---------- */
+(function(){
+  // grain tile
+  const g=document.createElement('canvas');g.width=g.height=220;const gx=g.getContext('2d'),id=gx.createImageData(220,220);
+  for(let i=0;i<id.data.length;i+=4){const v=Math.random()*255|0;id.data[i]=id.data[i+1]=id.data[i+2]=v;id.data[i+3]=Math.random()<.5?255:120}
+  gx.putImageData(id,0,0);document.getElementById('grain').style.backgroundImage=`url(${g.toDataURL()})`;
+
+  const cv=document.getElementById('bg'),ctx=cv.getContext('2d');const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let W=0,H=0,dpr=1;const BONE='236,231,220';
+
+  // brain point cloud: two folded hemispheres, cerebellum, brainstem
+  const P=[];const gauss=()=>{let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)};
+  const fold=(x,y,z)=>{const wx=x+.12*Math.sin(7.1*z+2.3*y),wy=y+.12*Math.sin(6.3*x+1.7*z),wz=z+.12*Math.sin(5.7*y+2.9*x);return Math.sin(15.5*wx+3*Math.sin(9*wz+1.1))+Math.sin(14.2*wy+3*Math.sin(10.4*wx+.7))+Math.sin(13.6*wz+3*Math.sin(9.6*wy+2.3))};
+  let tries=0;
+  while(P.length<15000&&tries<900000){tries++;const s=Math.random()<.5?-1:1;let ux=gauss(),uy=gauss(),uz=gauss();const L=Math.hypot(ux,uy,uz);ux/=L;uy/=L;uz/=L;
+    if(ux*s<-.32)continue;let x=ux*.31,y=uy*.5,z=uz*.72;if(y<0)y*=.62;x*=1-.12*(z/.72);
+    if(uy<-.1&&uz>-.15&&uz<.55)x*=1.08;const X=s*.31+x;const f=fold(X,y,z);
+    if(Math.abs(f)<.16)P.push([X,y,z,1]);else if(Math.random()<.02)P.push([X,y,z,.35])}
+  let cb=0;tries=0;while(cb<1500&&tries<100000){tries++;const s=Math.random()<.5?-1:1;let ux=gauss(),uy=gauss(),uz=gauss();const L=Math.hypot(ux,uy,uz);ux/=L;uy/=L;uz/=L;
+    const x=s*.16+ux*.19,y=-.37+uy*.14,z=-.5+uz*.19;if(Math.abs(Math.sin(44*y+3.5*Math.sin(6*x)))<.32){P.push([x,y,z,.85]);cb++}}
+  for(let i=0;i<380;i++){const t=Math.random(),a=Math.random()*Math.PI*2,r=.085-.02*t;P.push([Math.cos(a)*r,-.28-.46*t,-.2-.1*t+Math.sin(a)*r,.6])}
+  const glow=new Float32Array(P.length);const waves=[];
+
+  // network
+  let layers=[];const signals=[];
+  function layout(){const spec=W<720*dpr?[3,5,6,5,3]:[4,7,9,9,7,4];layers=spec.map((n,li)=>{const x=W*(.07+.86*li/(spec.length-1));const span=Math.min(H*.66,n*Math.min(H*.09,74*dpr));
+    return[...Array(n)].map((_,k)=>({x,y:H*.52+(n===1?0:span*(k/(n-1)-.5)),ph:Math.random()*6.28,fl:0}))})}
+  function resize(){dpr=Math.min(2,window.devicePixelRatio||1);W=cv.width=Math.round(innerWidth*dpr);H=cv.height=Math.round(innerHeight*dpr);layout();if(reduce)draw(0)}
+  addEventListener('resize',resize);
+
+  function spawn(li,ni){if(li>=layers.length-1)return;const nx=layers[li+1];signals.push({li,a:ni,b:Math.floor(Math.random()*nx.length),t:0,sp:.006+Math.random()*.008})}
+  window.bgFire=function(strength){const n=Math.round(4+strength*6);for(let i=0;i<n;i++)spawn(0,Math.floor(Math.random()*layers[0].length));
+    const o=P[Math.floor(Math.random()*P.length)];waves.push({o,t0:performance.now(),amp:Math.min(1,.45+strength*.25)});if(strength>=2)waves.push({o:P[Math.floor(Math.random()*P.length)],t0:performance.now()+250,amp:.8});if(reduce)draw(performance.now())};
+
+  const pos=(n,t)=>[n.x,n.y+Math.sin(t*.0006+n.ph)*5*dpr];
+  let lastSpawn=0,lastWave=0;
+  function draw(t){
+    ctx.clearRect(0,0,W,H);
+    // brain
+    const S=Math.min(W,H)*.48,cx=W*.5,cy=H*.47,yaw=1.5708+.6*Math.sin(t*.00011),pitch=-.22,cyw=Math.cos(yaw),syw=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch),breathe=1+Math.sin(t*.0009)*.012;
+    const now=performance.now();
+    for(let w=waves.length-1;w>=0;w--){if(now-waves[w].t0>2600)waves.splice(w,1)}
+    const B=[[],[],[],[],[],[],[],[]];const sz=1.1*dpr;
+    for(let i=0;i<P.length;i++){const[x,y,z,wt]=P[i];
+      let gl=0;for(const wv of waves){const age=(now-wv.t0)/1000;if(age<0)continue;const d=Math.hypot(x-wv.o[0],y-wv.o[1],z-wv.o[2]);const rr=age*.75;const k=(d-rr)/.07;gl+=wv.amp*Math.exp(-k*k)*(1-age/2.6)}
+      const x1=x*cyw+z*syw,z1=-x*syw+z*cyw,y2=y*cp-z1*sp,z2=y*sp+z1*cp;const pr=3.2/(3.2+z2);
+      const depth=Math.max(0,Math.min(1,.5-z2*.6));let a=(.07+.3*depth)*wt+gl*.6;const b=Math.max(0,Math.min(7,Math.floor(a*14)));
+      B[b].push(cx+x1*S*pr*breathe,cy-y2*S*pr*breathe,pr)}
+    for(let b=0;b<8;b++){const arr=B[b];if(!arr.length)continue;ctx.fillStyle=`rgba(${BONE},${(b+.5)/14})`;ctx.beginPath();for(let i=0;i<arr.length;i+=3){const s=sz*arr[i+2];ctx.rect(arr[i]-s/2,arr[i+1]-s/2,s,s)}ctx.fill()}
+
+    // network edges
+    ctx.lineWidth=dpr*.8;ctx.strokeStyle=`rgba(${BONE},.05)`;ctx.beginPath();
+    for(let li=0;li<layers.length-1;li++)for(const a of layers[li])for(const b of layers[li+1]){const p=pos(a,t),q=pos(b,t);ctx.moveTo(p[0],p[1]);ctx.lineTo(q[0],q[1])}ctx.stroke();
+    // signals
+    if(!reduce&&t-lastSpawn>420){lastSpawn=t;spawn(0,Math.floor(Math.random()*layers[0].length))}
+    if(!reduce&&t-lastWave>4200){lastWave=t;waves.push({o:P[Math.floor(Math.random()*P.length)],t0:now,amp:.35})}
+    for(let i=signals.length-1;i>=0;i--){const s=signals[i];s.t+=reduce?1:s.sp*1.6;const A=layers[s.li][s.a],Bn=layers[s.li+1][s.b];if(!A||!Bn){signals.splice(i,1);continue}const p=pos(A,t),q=pos(Bn,t);
+      if(s.t>=1){Bn.fl=1;signals.splice(i,1);if(Math.random()<.82)spawn(s.li+1,s.b);if(Math.random()<.25)spawn(s.li+1,s.b);continue}
+      const x=p[0]+(q[0]-p[0])*s.t,y=p[1]+(q[1]-p[1])*s.t,tx=p[0]+(q[0]-p[0])*Math.max(0,s.t-.12),ty=p[1]+(q[1]-p[1])*Math.max(0,s.t-.12);
+      const gr=ctx.createLinearGradient(tx,ty,x,y);gr.addColorStop(0,`rgba(${BONE},0)`);gr.addColorStop(1,`rgba(${BONE},.55)`);ctx.strokeStyle=gr;ctx.lineWidth=1.4*dpr;ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(x,y);ctx.stroke();
+      ctx.fillStyle=`rgba(${BONE},.8)`;ctx.beginPath();ctx.arc(x,y,1.7*dpr,0,6.283);ctx.fill()}
+    if(signals.length>140)signals.splice(0,signals.length-140);
+    // nodes
+    for(const L of layers)for(const n of L){const[x,y]=pos(n,t);const r=(3.4+n.fl*2.2)*dpr;
+      if(n.fl>.02){ctx.fillStyle=`rgba(${BONE},${n.fl*.12})`;ctx.beginPath();ctx.arc(x,y,r*3.2,0,6.283);ctx.fill()}
+      ctx.fillStyle=`rgba(${BONE},${.06+n.fl*.5})`;ctx.strokeStyle=`rgba(${BONE},${.3+n.fl*.4})`;ctx.lineWidth=dpr;ctx.beginPath();ctx.arc(x,y,r,0,6.283);ctx.fill();ctx.stroke();n.fl*=.94}
+  }
+  function loop(t){draw(t);requestAnimationFrame(loop)}
+  resize();if(reduce)draw(0);else requestAnimationFrame(loop);
+})();
+</script>
+</html>

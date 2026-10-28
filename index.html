@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Discrete Math Games</title>
+<meta name="description" content="Two free browser games that teach discrete mathematics: Synapse and The Sleeping Proof.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&family=Space+Mono&display=swap">
+<style>
+:root{--ink:#0b0b0a;--bone:#ece7dc;--bone-2:rgba(236,231,220,.72);--bone-3:rgba(236,231,220,.48);--line:rgba(236,231,220,.14)}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--ink);color:var(--bone);font-family:Inter,system-ui,sans-serif;line-height:1.55;display:flex;flex-direction:column;align-items:center;padding:clamp(32px,8vw,88px) 16px 48px}
+.eyebrow{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--bone-3)}
+h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:400;font-size:clamp(40px,8vw,68px);line-height:1.05;margin:14px 0 12px;text-align:center}
+h1 i{color:var(--bone-2)}
+p.lede{max-width:56ch;text-align:center;color:var(--bone-2);margin:0 0 40px}
+.games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;width:min(880px,100%)}
+@media (max-width:700px){.games{grid-template-columns:minmax(0,1fr)}}
+a.game{display:flex;flex-direction:column;gap:10px;padding:26px;border:1px solid var(--line);border-radius:18px;background:rgba(236,231,220,.03);color:inherit;text-decoration:none;transition:border-color .2s,background .2s}
+a.game:hover,a.game:focus-visible{border-color:var(--bone);background:rgba(236,231,220,.06);outline:none}
+a.game h2{font-family:"Cormorant Garamond",Georgia,serif;font-weight:400;font-size:32px;margin:0}
+a.game p{margin:0;color:var(--bone-2);font-size:15px}
+a.game span.go{margin-top:auto;padding-top:8px;font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.08em}
+.credits{display:flex;justify-content:center;flex-wrap:wrap;gap:14px 40px;margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.credits div{display:flex;flex-direction:column;align-items:center;gap:3px}
+.credits b{font-family:"Cormorant Garamond",Georgia,serif;font-weight:400;font-size:21px;color:var(--bone)}
+footer{margin-top:40px;color:var(--bone-3);font-size:12.5px;text-align:center;max-width:70ch}
+</style>
+</head>
+<body>
+<span class="eyebrow">Discrete mathematics · two games</span>
+<h1>Learn to reason,<br><i>one proof at a time.</i></h1>
+<p class="lede">Logic, proofs, sets, functions, induction, number theory, counting, probability and graphs. Questions change every time you play, and each game has a full glossary.</p>
+<main class="games">
+  <a class="game" href="synapse.html">
+    <span class="eyebrow">Quiz and puzzles</span>
+    <h2>Synapse</h2>
+    <p>Nine layers, each with a short briefing, five questions with full explanations and a hands-on challenge. Plus a 90-second Gauntlet.</p>
+    <span class="go">Play Synapse →</span>
+  </a>
+  <a class="game" href="sleeping-proof.html">
+    <span class="eyebrow">Story game</span>
+    <h2>The Sleeping Proof</h2>
+    <p>Travel through a sleeping mathematician’s mind and reason with the fallacies inside it until you can spare them.</p>
+    <span class="go">Play The Sleeping Proof →</span>
+  </a>
+</main>
+<footer>Content follows Princeton COS 341, Harvard CS 20, Cornell CS 2800, Columbia COMS 3203, Cambridge Discrete Mathematics and Illinois CS 173. Progress is saved in your browser only.
+  <div class="credits"><div><span class="eyebrow">Author &amp; project manager</span><b>Moinuddeen</b></div><div><span class="eyebrow">Made by</span><b>Claude, an AI model by Anthropic</b></div></div>
+</footer>
+</body>
+</html>
