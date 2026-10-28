@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Discrete Math Games</title>
+<link rel="icon" type="image/svg+xml" href="icons/home.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/home-32.png">
+<link rel="apple-touch-icon" href="icons/home-180.png">
+<meta name="theme-color" content="#0b0b0a">
 <meta name="description" content="Two free browser games that teach discrete mathematics: Synapse and The Sleeping Proof.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,6 +17,7 @@
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%}
 body{background:var(--ink);color:var(--bone);font-family:Inter,system-ui,sans-serif;line-height:1.55;display:flex;flex-direction:column;align-items:center;padding:clamp(32px,8vw,88px) 16px 48px}
+.home-logo{width:76px;height:76px;margin-bottom:18px}
 .eyebrow{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--bone-3)}
 h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:400;font-size:clamp(40px,8vw,68px);line-height:1.05;margin:14px 0 12px;text-align:center}
 h1 i{color:var(--bone-2)}
@@ -21,6 +26,7 @@ p.lede{max-width:56ch;text-align:center;color:var(--bone-2);margin:0 0 40px}
 @media (max-width:700px){.games{grid-template-columns:minmax(0,1fr)}}
 a.game{display:flex;flex-direction:column;gap:10px;padding:26px;border:1px solid var(--line);border-radius:18px;background:rgba(236,231,220,.03);color:inherit;text-decoration:none;transition:border-color .2s,background .2s}
 a.game:hover,a.game:focus-visible{border-color:var(--bone);background:rgba(236,231,220,.06);outline:none}
+a.game .logo{width:64px;height:64px;margin:-4px 0 6px -6px}
 a.game h2{font-family:"Cormorant Garamond",Georgia,serif;font-weight:400;font-size:32px;margin:0}
 a.game p{margin:0;color:var(--bone-2);font-size:15px}
 a.game span.go{margin-top:auto;padding-top:8px;font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.08em}
@@ -31,17 +37,20 @@ footer{margin-top:40px;color:var(--bone-3);font-size:12.5px;text-align:center;ma
 </style>
 </head>
 <body>
+<svg class="home-logo" role="img" aria-label="Discrete Math Games" viewBox="0 0 64 64"><path d="M32.0 22.0L32.0 16.0M41.5 28.9L47.2 27.1M37.9 40.1L41.4 44.9M26.1 40.1L22.6 44.9M22.5 28.9L16.8 27.1" stroke="#ece7dc" stroke-width="2.4" stroke-linecap="round" opacity=".55" fill="none"/><g fill="#0b0b0a" stroke="#ece7dc" stroke-width="2.6"><circle cx="32.0" cy="12.0" r="4.2"/><circle cx="51.0" cy="25.8" r="4.2"/><circle cx="43.8" cy="48.2" r="4.2"/><circle cx="20.2" cy="48.2" r="4.2"/><circle cx="13.0" cy="25.8" r="4.2"/></g><path d="M32 23l6.5 9-6.5 9-6.5-9z" fill="#ece7dc"/></svg>
 <span class="eyebrow">Discrete mathematics · two games</span>
 <h1>Learn to reason,<br><i>one proof at a time.</i></h1>
 <p class="lede">Logic, proofs, sets, functions, induction, number theory, counting, probability and graphs. Questions change every time you play, and each game has a full glossary.</p>
 <main class="games">
   <a class="game" href="synapse.html">
+    <svg class="logo" aria-hidden="true" viewBox="0 0 64 64"><g fill="none" stroke="#ece7dc" stroke-width="2.6" stroke-linecap="round" opacity=".55"><path d="M15 22 30 17M15 22 30 32M15 42 30 32M15 42 30 47M15 22 30 47M15 42 30 17M34 17 49 32M34 32h15M34 47l15-15"/></g><g fill="#0b0b0a" stroke="#ece7dc" stroke-width="2.8"><circle cx="13" cy="22" r="4.6"/><circle cx="13" cy="42" r="4.6"/><circle cx="32" cy="17" r="4.6"/><circle cx="32" cy="47" r="4.6"/><circle cx="51" cy="32" r="4.6"/></g><circle cx="32" cy="32" r="5.6" fill="#ece7dc"/><circle cx="32" cy="32" r="10" fill="none" stroke="#ece7dc" stroke-width="1.4" opacity=".35"/></svg>
     <span class="eyebrow">Quiz and puzzles</span>
     <h2>Synapse</h2>
     <p>Nine layers, each with a short briefing, five questions with full explanations and a hands-on challenge. Plus a 90-second Gauntlet.</p>
     <span class="go">Play Synapse →</span>
   </a>
   <a class="game" href="sleeping-proof.html">
+    <svg class="logo" aria-hidden="true" viewBox="0 0 64 64"><circle cx="32" cy="32" r="19" fill="#ece7dc" opacity=".12"/><circle cx="32" cy="32" r="24" fill="none" stroke="#ece7dc" stroke-width="1.5" stroke-dasharray="2 5" stroke-linecap="round" opacity=".55"/><path d="M32 17l10 15-10 15-10-15z" fill="#ece7dc"/></svg>
     <span class="eyebrow">Story game</span>
     <h2>The Sleeping Proof</h2>
     <p>Travel through a sleeping mathematician’s mind and reason with the fallacies inside it until you can spare them.</p>
