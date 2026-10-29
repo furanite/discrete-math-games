@@ -97,7 +97,7 @@ dialog#codex[open]{display:flex;flex-direction:column}
 <div class="app">
   <header class="top">
     <div class="brand"><div class="brand-row"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="19" fill="#ece7dc" opacity=".12"/><circle cx="32" cy="32" r="24" fill="none" stroke="#ece7dc" stroke-width="1.5" stroke-dasharray="2 5" stroke-linecap="round" opacity=".55"/><path d="M32 17l10 15-10 15-10-15z" fill="#ece7dc"/></svg><b>The Sleeping Proof</b></div><span id="where">Title</span></div>
-    <div class="tools"><button class="tb" id="codexBtn">Codex <span style="opacity:.5;font-family:var(--mono);font-size:11px">C</span></button><button class="tb" id="muteBtn" aria-pressed="false">Sound on</button></div>
+    <div class="tools"><button class="tb" id="codexBtn">Codex <span style="opacity:.5;font-family:var(--mono);font-size:11px">C</span></button><button class="tb" id="studyBtn">Study hall</button><button class="tb" id="muteBtn" aria-pressed="false">Sound on</button></div>
   </header>
   <div class="screen"><canvas id="game" width="640" height="480" aria-label="Game screen. Arrow keys move, Z confirms, X goes back, C opens the codex." tabindex="0"></canvas></div>
   <p class="keys">Arrows or WASD move · Z / Enter talk and confirm · X / Esc back · C codex · M sound</p>
@@ -301,6 +301,76 @@ function chiGen(){const X=pick([['the cycle C','n',n=>n%2?3:2],['the complete gr
   const kn=X[0].includes('complete graph'),name=X[1]==='m,n'?X[0]+subN(m)+','+subN(n):X[0].endsWith(' on')?X[0]+' '+n+' vertices':X[0].endsWith(' ')?X[0]+n:X[0]+subN(n);const a=X[2](n);
   return{q:`What is the chromatic number of ${name}?`,o:opts(a,[a+1,a-1,n,2,3,4]),w:kn?`Every pair of vertices is adjacent, so all ${n} need different colours.`:{2:'It is bipartite with at least one edge, so exactly 2 colours.',3:'It contains an odd cycle, so 2 colours fail, and 3 suffice.',4:'The rim is an odd cycle needing 3 colours, and the hub touches all of them, so it needs a 4th.'}[a],s:'CORN'}}
 
+/* recurrences */
+const supN=n=>String(n).replace(/-/g,'⁻').replace(/\d/g,c=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[c]);
+const mn=n=>n<0?'−'+(-n):String(n);
+const aN=k=>'a'+(k==='n'?'ₙ':subN(k));
+function recStr(c1,c2,d){const t=[];const term=(c,s)=>{if(!c)return;const a=Math.abs(c),body=(a===1?'':a)+s;t.push(t.length?(c<0?' − ':' + ')+body:(c<0?'−':'')+body)};
+  term(c1,'aₙ₋₁');term(c2,'aₙ₋₂');if(d)t.push(t.length?(d<0?' − ':' + ')+Math.abs(d):String(d));return 'aₙ = '+t.join('')}
+const powStr=r=>r===1?'':r<0?'·('+'−'+(-r)+')ⁿ':'·'+r+'ⁿ';
+function genSol(r1,r2){const p=(L,r)=>r===1?L:L+powStr(r);return p('A',r1)+' + '+p('B',r2)}
+function recNextGen(){let c1,c2,d,a0,a1,seq,k;
+  do{const two=Math.random()<.6;c1=rnd(1,3);c2=two?pick([1,2,-1]):0;d=two?0:pick([1,2,3,-1]);a0=rnd(0,3);a1=two?rnd(1,4):c1*a0+d;k=rnd(5,6);
+    seq=[a0,a1];for(let i=2;i<=k+1;i++)seq.push(c1*seq[i-1]+c2*seq[i-2]*(c2?1:0)+(c2?0:d));if(!c2){seq=[a0];for(let i=1;i<=k+1;i++)seq.push(c1*seq[i-1]+d)}
+  }while(seq.some(v=>v<0)||seq[k+1]>6000||new Set(seq.slice(0,4)).size<3);
+  const ans=seq[k],init=c2?`${aN(0)} = ${a0}, ${aN(1)} = ${a1}`:`${aN(0)} = ${a0}`;
+  return{q:`If ${M(recStr(c1,c2,d))} with ${M(init)}, what is ${M(aN(k))}?`,o:opts(ans,[seq[k-1],seq[k+1],ans+c1,ans-1,ans*2]),
+    w:`Step forward one term at a time: ${seq.slice(0,k+1).map((v,i)=>aN(i)+' = '+v).join(', ')}.${c2?'':' Careful with the index: '+aN(0)+' is the first term.'}`,s:'UIUC'}}
+function recCharGen(){if(Math.random()<.25){const r=pick([2,3,-2,4]),c1=2*r,c2=-r*r,ans='(A + Bn)'+powStr(r).slice(1);
+    return{q:`What is the general solution of ${M(recStr(c1,c2,0))}?`,o:sopts(ans,['A'+powStr(r)+' + B'+powStr(-r),'A'+powStr(r)+' + B'+powStr(r),'(A + Bn)'+powStr(-r).slice(1),'A'+powStr(c1)+' + B'+powStr(c2)]),
+      w:`Characteristic equation r² ${c1<0?'+ '+(-c1):'− '+c1}r + ${-c2} = 0 is (r ${r<0?'+ '+(-r):'− '+r})² = 0, a repeated root ${r}. A repeated root needs the extra factor n: (A + Bn)·${r<0?'('+r+')':r}ⁿ.`,s:'PRIN'}}
+  let r1,r2;do{r1=pick([-3,-2,-1,1,2,3,4,5]);r2=pick([-3,-2,-1,1,2,3,4,5])}while(r1>=r2||r1+r2===0||Math.abs(r1*r2)>15);
+  const c1=r1+r2,c2=-r1*r2,ans=genSol(r1,r2),askRoots=Math.random()<.4;
+  const co=k=>Math.abs(k)===1?'':Math.abs(k),eq=`r²${c1?(c1<0?' + ':' − ')+co(c1)+'r':''} ${c2>0?'− '+c2:'+ '+(-c2)} = 0`;
+  if(askRoots){const rp=(x,y)=>`${mn(Math.min(x,y))} and ${mn(Math.max(x,y))}`,a=rp(r1,r2);return{q:`What are the characteristic roots of ${M(recStr(c1,c2,0))}?`,o:sopts(a,[rp(-r1,-r2),c1===c2?rp(c1,c2+1):rp(c1,c2),rp(r1,-r2),rp(-r1,r2),rp(r1+1,r2+1)]),
+    w:`Try aₙ = rⁿ and divide by rⁿ⁻²: ${eq}, which factors as (r ${r1<0?'+ '+(-r1):'− '+r1})(r ${r2<0?'+ '+(-r2):'− '+r2}) = 0.`,s:'PRIN'}}
+  return{q:`What is the general solution of ${M(recStr(c1,c2,0))}?`,o:sopts(ans,[genSol(-r2,-r1),genSol(r1,-r2),'(A + Bn)'+powStr(r2).slice(1)||'A + Bn',genSol(r1+1,r2+1),genSol(-r1,r2)]),
+    w:`The characteristic equation ${eq} has distinct roots ${mn(r1)} and ${mn(r2)}, so every solution is ${ans}; the initial values pick A and B.`,s:'PRIN'}}
+function recMasterGen(){const[a,b,d]=pick([[1,2,0],[2,2,0],[2,2,1],[2,2,2],[3,2,1],[4,2,1],[4,2,2],[8,2,2],[7,2,2],[1,2,1],[2,4,0],[2,4,1],[4,4,1],[16,4,2],[3,3,1],[9,3,1],[2,2,3],[8,2,3]]);
+  const bd=b**d,nd=d===0?'1':d===1?'n':'n'+supN(d),T=`T(n) = ${a===1?'':a}T(n/${b}) + ${nd}`;
+  const lg=Math.log(a)/Math.log(b),li=Math.abs(lg-Math.round(lg))<1e-9;
+  const pw=e=>e===0?'Θ(1)':e===1?'Θ(n)':'Θ(n'+supN(e)+')',withLog=d===0?'Θ(log n)':d===1?'Θ(n log n)':'Θ(n'+supN(d)+' log n)';
+  const big=li?pw(Math.round(lg)):`Θ(n^(log${subN(b)} ${a})) ≈ Θ(n^${lg.toFixed(2)})`;
+  const ans=a<bd?pw(d):a===bd?withLog:big;
+  const why=a<bd?`a = ${a} < bᵈ = ${bd}: the work at the top level dominates, so ${ans}.`:a===bd?`a = ${a} = bᵈ = ${bd}: every level of the recursion tree does the same work, and there are about log n levels, so ${ans}.`:`a = ${a} > bᵈ = ${bd}: the leaves dominate. There are n^(log${subN(b)} ${a}) of them, so ${ans}.`;
+  return{q:`By the master theorem, ${M(T)} solves to`,o:sopts(ans,[pw(d),withLog,big,'Θ(n log n)','Θ(n²)','Θ(log n)','Θ(n)']),w:why,s:'PRIN'}}
+function recClosedGen(){if(Math.random()<.3){const a0=rnd(0,9),d=pick([2,3,4,5,7,-2,-3]),ans=`aₙ = ${a0?a0+' ':''}${a0?(d<0?'− ':'+ '):d<0?'−':''}${Math.abs(d)}n`;
+    return{q:`Which closed form solves ${M('aₙ = aₙ₋₁ '+(d<0?'− ':'+ ')+Math.abs(d))} with ${M('a₀ = '+a0)}?`,o:sopts(ans,[`aₙ = ${a0} + ${Math.abs(d)}ⁿ`,`aₙ = ${a0}·${Math.abs(d)}ⁿ`,`aₙ = ${a0+d} ${d<0?'−':'+'} ${Math.abs(d)}n`,`aₙ = ${Math.abs(d)}n`]),
+      w:`Each step adds ${d}, so after n steps aₙ = a₀ + ${d}n. Check: a₁ = ${a0+d}.`,s:'UIUC'}}
+  const c=pick([2,3,4]);let p;do{p=rnd(-3,3)}while(!p);const A=rnd(1,3),d=p*(1-c),a0=A+p;
+  const cf=(A_,p_)=>`aₙ = ${A_===1?'':mn(A_)+'·'}${c}ⁿ ${p_<0?'− '+(-p_):'+ '+p_}`,ans=cf(A,p);
+  return{q:`Which closed form solves ${M(recStr(c,0,d))} with ${M('a₀ = '+mn(a0))}?`,o:sopts(ans,[cf(A,-p),a0>0&&a0!==A?cf(a0,p):cf(A+2,p),cf(A+1,p),`aₙ = ${mn(a0)}·${c}ⁿ`,cf(c,p)]),
+    w:`A constant particular solution p satisfies p = ${c}p ${d<0?'− '+(-d):'+ '+d}, so p = ${mn(p)}. Then aₙ = A·${c}ⁿ ${p<0?'− '+(-p):'+ '+p} and a₀ = A ${p<0?'− '+(-p):'+ '+p} = ${mn(a0)} gives A = ${A}.`,s:'HARV'}}
+/* boolean algebra */
+const PR='′';
+function bexpr(depth,vars){if(depth===0||Math.random()<.25){const v=pick(vars),neg=Math.random()<.3;return{s:v+(neg?PR:''),f:e=>neg?1-e[v]:e[v],t:'v',b:v}}
+  const op=pick(['and','or','or','and','xor','not']);if(op==='not'){const a=bexpr(depth-1,vars);if(a.t==='v')return bexpr(depth,vars);return{s:'('+a.s+')'+PR,f:e=>1-a.f(e),t:'v'}}
+  const a=bexpr(depth-1,vars),b=bexpr(depth-1,vars);if(a.b&&a.b===b.b)return bexpr(depth,vars);
+  if(op==='and'){const w=x=>x.t==='or'||x.t==='xor'?'('+x.s+')':x.s;return{s:w(a)+w(b),f:e=>a.f(e)&b.f(e),t:'and'}}
+  if(op==='or')return{s:(a.t==='xor'?'('+a.s+')':a.s)+' + '+(b.t==='xor'?'('+b.s+')':b.s),f:e=>a.f(e)|b.f(e),t:'or'};
+  const w=x=>x.t==='v'||x.t==='and'?x.s:'('+x.s+')';return{s:w(a)+' ⊕ '+w(b),f:e=>a.f(e)^b.f(e),t:'xor'}}
+const ROWS3=[...Array(8)].map((_,r)=>({x:r>>2&1,y:r>>1&1,z:r&1}));
+function boolCountGen(){let E,cnt,ok;do{E=bexpr(2,['x','y','z']);cnt=ROWS3.filter(e=>E.f(e)).length;ok=['x','y','z'].filter(v=>E.s.includes(v)).length>=2&&cnt>0&&cnt<8&&E.s.length>=6&&E.s.length<=22}while(!ok);
+  const rows=ROWS3.filter(e=>E.f(e)).map(e=>''+e.x+e.y+e.z);
+  return{q:`For how many of the 8 input rows (x, y, z) is ${M('F = '+E.s)} equal to 1?`,o:opts(cnt,[8-cnt,cnt+1,cnt-1,cnt+2,4]),w:`Evaluate row by row. F = 1 exactly on xyz = ${rows.join(', ')}: that is ${cnt} row${cnt===1?'':'s'}.`,s:'COLU'}}
+function boolMintermGen(){const r=rnd(0,7),b=[r>>2&1,r>>1&1,r&1],V=['x','y','z'],mt=V.map((v,i)=>v+(b[i]?'':PR)).join(''),mx=V.map((v,i)=>v+(b[i]?PR:'')).join(' + '),flip=k=>V.map((v,i)=>v+((i===k?!b[i]:b[i])?'':PR)).join('');
+  if(Math.random()<.6)return{q:`Which minterm is 1 only on the row ${M('x = '+b[0]+', y = '+b[1]+', z = '+b[2])}?`,o:sopts(mt,[V.map((v,i)=>v+(b[i]?PR:'')).join(''),flip(0),flip(2),flip(1),mx]),w:`A minterm uses every variable once: plain where the row has 1, complemented where it has 0. So ${mt}, which is row ${r} (binary ${b.join('')}).`,s:'COLU'};
+  const mxf=k=>V.map((v,i)=>v+((i===k?!b[i]:b[i])?PR:'')).join(' + ');
+  return{q:`Which maxterm is 0 only on the row ${M('x = '+b[0]+', y = '+b[1]+', z = '+b[2])}?`,o:sopts(mx,[V.map((v,i)=>v+(b[i]?'':PR)).join(' + '),mxf(0),mxf(1),mxf(2),mt]),w:`A maxterm is a sum that is 0 on exactly one row, so every literal must be 0 there: complement the variables that are 1. That gives ${mx}. It is the complement of the minterm ${mt}, by De Morgan.`,s:'COLU'}}
+const BSIMP=[["X + XY","X",["Y","XY","X + Y"],"Absorption: X + XY = X(1 + Y) = X·1 = X."],["X(X + Y)","X",["XY","X + Y","Y"],"Absorption, the dual form: X(X + Y) = X + XY = X."],
+ ["X + X'Y","X + Y",["X","Y","X'Y"],"Distribute + over ·: X + X'Y = (X + X')(X + Y) = 1·(X + Y) = X + Y."],["XY + XY'","X",["Y","XY","1"],"Factor: XY + XY' = X(Y + Y') = X·1 = X."],
+ ["(X + Y)(X + Y')","X",["Y","X + Y","0"],"The dual of factoring: (X + Y)(X + Y') = X + YY' = X + 0 = X."],["(XY)'","X' + Y'",["X'Y'","X + Y","XY'"],"De Morgan: the complement of a product is the sum of the complements."],
+ ["(X + Y)'","X'Y'",["X' + Y'","XY","X + Y'"],"De Morgan: the complement of a sum is the product of the complements."],["XY + X'Z + YZ","XY + X'Z",["XY + YZ","X'Z + YZ","Y + Z"],"Consensus: YZ = XYZ + X'YZ, and each piece is already covered by XY or X'Z, so YZ can go."],
+ ["XYZ + XYZ'","XY",["XZ","XYZ","Z"],"Factor out XY: XY(Z + Z') = XY."],["X'Y' + X'Y + XY'","X' + Y'",["X'Y'","XY","X + Y"],"These three rows are every row except X = Y = 1, so the function is (XY)' = X' + Y'."],
+ ["X(X' + Y)","XY",["X","Y","0"],"Distribute: XX' + XY = 0 + XY = XY."],["(X + Y)(X' + Z)(Y + Z)","(X + Y)(X' + Z)",["(X + Y)(Y + Z)","(X' + Z)(Y + Z)","XY + Z"],"The consensus law, dual form: the factor (Y + Z) is implied by the other two and can be dropped."]];
+function boolSimpGen(){const T=pick(BSIMP),V=shuffle(pick([['x','y','z'],['a','b','c'],['p','q','r']])),sub=s=>s.replace(/[XYZ]/g,c=>V['XYZ'.indexOf(c)]).replace(/'/g,PR);
+  return{q:`Simplify ${M(sub(T[0]))}.`,o:sopts(sub(T[1]),T[2].map(sub)).map(M),w:sub(T[3]),s:pick(['COLU','UIUC'])}}
+function boolFnGen(){const t=rnd(0,3),n=rnd(2,4),rows=2**n;
+  if(t===0){const a=2**rows;return{q:`How many different Boolean functions of ${n} variables are there?`,o:opts(a,[rows,2**n*n,n**rows,a/2,rows*rows]),w:`A truth table has 2^${n} = ${rows} rows and each row can output 0 or 1, so there are 2^${rows} = ${a.toLocaleString('en')} functions.`,s:'COLU'}}
+  if(t===1){const k=rnd(1,Math.min(4,rows-1)),a=C(rows,k);return{q:`How many Boolean functions of ${n} variables output 1 on exactly ${k} row${k>1?'s':''}?`,o:opts(a,[2**k,rows*k,C(rows,k-1)||rows+1,k**n]),w:`Choose which ${k} of the ${rows} rows ${k===1?'is':'are'} 1: C(${rows}, ${k}) = ${a}.`,s:'COLU'}}
+  if(t===2){const a=2**(rows-1);return{q:`How many Boolean functions of ${n} variables satisfy ${M('F(0, …, 0) = 0')}?`,o:opts(a,[2**rows,rows-1,2**rows-1,a/2]),w:`One row is fixed and the other ${rows-1} are free: 2^${rows-1} = ${a}.`,s:'COLU'}}
+  const a=2**(rows/2);return{q:`A Boolean function F of ${n} variables is self-dual if F(x′₁, …, x′ₙ) = F(x₁, …, xₙ)′. How many are there?`,o:opts(a,[2**rows,rows/2,2**(rows-1),rows]),w:`The rows pair up with their complements (${rows}/2 = ${rows/2} pairs). Choosing F on one row of each pair forces the other, so 2^${rows/2} = ${a}.`,s:'COLU'}}
+
 /* ---------- topics ---------- */
 const TOPICS=[
 {id:'logic',name:'Logic',blurb:'Connectives, quantifiers, and what follows from what.',src:['UIUC','CORN','CAM','PRIN'],ch:'truth',boss:'Truth table',gen:[lgRowsGen,lgNegGen,lgFormGen],qs:[
@@ -393,7 +463,31 @@ const TOPICS=[
  {q:'Euler’s formula for a connected planar graph:',o:['V − E + F = 2','V + E = F','V − E = 1','E = 3V − 6'],w:'E ≤ 3V − 6 follows from it (for V ≥ 3), which shows K₅ is not planar.',s:'PRIN'},
  {q:'Which graph is NOT planar?',o:['K₃,₃','K₄','C₁₀','any tree'],w:'K₃,₃ and K₅ are the forbidden pieces in Kuratowski’s theorem.',s:'PRIN'},
  {q:'Hall’s theorem: bipartite G with sides X, Y has a matching covering X iff…',o:['|N(S)| ≥ |S| for every S ⊆ X','|X| = |Y|','every vertex has degree ≥ 1','G is connected'],w:'Every group of X-vertices needs at least as many neighbours as members.',s:'PRIN'},
- {q:'Dijkstra’s shortest-path algorithm is correct when…',o:['all edge weights are nonnegative','the graph is a tree','the graph is undirected','all weights are distinct'],w:'A finalized vertex can never get a shorter path later, which fails with negative edges. Use Bellman–Ford there.',s:'PRIN'}]}
+ {q:'Dijkstra’s shortest-path algorithm is correct when…',o:['all edge weights are nonnegative','the graph is a tree','the graph is undirected','all weights are distinct'],w:'A finalized vertex can never get a shorter path later, which fails with negative edges. Use Bellman–Ford there.',s:'PRIN'}]},
+{id:'rec',name:'Recurrences',blurb:'Recursive sequences, unrolling, characteristic roots, divide and conquer, generating functions.',src:['PRIN','UIUC','HARV','CORN'],ch:'recur',boss:'Step the recurrence',gen:[recNextGen,recCharGen,recMasterGen,recClosedGen],qs:[
+ {q:'With `F₀ = 0`, `F₁ = 1` and `Fₙ = Fₙ₋₁ + Fₙ₋₂`, what is `F₁₀`?',o:['55','89','34','144'],w:'0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55. Count from F₀: the eleventh number listed is F₁₀ = 55.',s:'UIUC'},
+ {q:'The Tower of Hanoi satisfies `T(n) = 2T(n − 1) + 1`, `T(1) = 1`. What is `T(n)`?',o:['`2ⁿ − 1`','`2ⁿ`','`n²`','`2n − 1`'],w:'Unroll: 1, 3, 7, 15, 31, … Guess 2ⁿ − 1 and check: 2(2ⁿ⁻¹ − 1) + 1 = 2ⁿ − 1.',s:'PRIN'},
+ {q:'What is the general solution of `aₙ = 5aₙ₋₁ − 6aₙ₋₂`?',o:['`A·2ⁿ + B·3ⁿ`','`A·5ⁿ + B·6ⁿ`','`A·(−2)ⁿ + B·(−3)ⁿ`','`(A + Bn)·5ⁿ`'],w:'Characteristic equation r² − 5r + 6 = 0, so (r − 2)(r − 3) = 0. Two distinct roots give A·2ⁿ + B·3ⁿ.',s:'PRIN'},
+ {q:'`aₙ = 4aₙ₋₁ − 4aₙ₋₂` has characteristic equation `(r − 2)² = 0`. Its general solution is',o:['`(A + Bn)·2ⁿ`','`A·2ⁿ + B·2ⁿ`','`A·2ⁿ + B·(−2)ⁿ`','`A·4ⁿ`'],w:'A·2ⁿ + B·2ⁿ is only one free constant in disguise. A repeated root needs the extra solution n·2ⁿ.',s:'PRIN'},
+ {q:'Merge sort satisfies `T(n) = 2T(n/2) + n`. How fast does `T(n)` grow?',o:['`Θ(n log n)`','`Θ(n)`','`Θ(n²)`','`Θ(log n)`'],w:'Each of the log₂ n levels of the recursion tree does n work in total. Master theorem: a = 2 = bᵈ = 2¹.',s:'PRIN'},
+ {q:'Binary search satisfies `T(n) = T(n/2) + 1`. How fast does `T(n)` grow?',o:['`Θ(log n)`','`Θ(n)`','`Θ(1)`','`Θ(n log n)`'],w:'Halving n reaches 1 after about log₂ n steps, each costing 1.',s:'UIUC'},
+ {q:'Which sequence does the generating function `1/(1 − 2x)` produce?',o:['1, 2, 4, 8, …','1, 2, 3, 4, …','2, 2, 2, 2, …','1, −2, 4, −8, …'],w:'It is the geometric series 1 + 2x + (2x)² + ⋯, so the coefficient of xⁿ is 2ⁿ.',s:'HARV'},
+ {q:'Let bₙ count bit strings of length n with no two 1s in a row. Which recurrence holds?',o:['`bₙ = bₙ₋₁ + bₙ₋₂`','`bₙ = 2bₙ₋₁`','`bₙ = bₙ₋₁ + 1`','`bₙ = 2bₙ₋₁ − bₙ₋₂`'],w:'A valid string ends in 0 (any valid string of length n − 1, then 0) or in 01 (any valid string of length n − 2, then 01). The Fibonacci rule appears.',s:'HARV'},
+ {q:'Unroll `aₙ = aₙ₋₁ + 3` with `a₀ = 2`. Then `aₙ` is',o:['`3n + 2`','`2·3ⁿ`','`3ⁿ + 2`','`2n + 3`'],w:'Each step adds 3: 2, 5, 8, 11, … so aₙ = 2 + 3n.',s:'UIUC'},
+ {q:'For `aₙ = 2aₙ₋₁ + 1`, which constant is a particular solution?',o:['−1','1','2','0'],w:'Try aₙ = p: p = 2p + 1 gives p = −1. The full solution is A·2ⁿ − 1.',s:'HARV'},
+ {q:'How many initial values does a linear recurrence of order 3 need to pin down one sequence?',o:['3','1','2','None'],w:'The general solution has three free constants, one per characteristic root, so three initial values are needed.',s:'CORN'}]},
+{id:'bool',name:'Boolean algebra',blurb:'Boolean functions, laws, normal forms, logic gates, circuits and Karnaugh maps.',src:['COLU','UIUC','CAM'],ch:'circuit',boss:'Read the circuit',gen:[boolCountGen,boolMintermGen,boolSimpGen,boolFnGen],qs:[
+ {q:'How many different Boolean functions of 3 variables are there?',o:['256','8','64','512'],w:'A truth table has 2³ = 8 rows, and each row can output 0 or 1: 2⁸ = 256 functions.',s:'COLU'},
+ {q:'Simplify `x + xy`.',o:['`x`','`y`','`xy`','`x + y`'],w:'Absorption: x + xy = x(1 + y) = x·1 = x.',s:'COLU'},
+ {q:'By De Morgan’s law, `(xy)′` equals',o:['`x′ + y′`','`x′y′`','`x + y`','`xy′`'],w:'The complement of a product is the sum of the complements. The dual law is (x + y)′ = x′y′.',s:'COLU'},
+ {q:'Which single gate type is enough to build every Boolean function?',o:['NAND','AND','OR','XOR'],w:'NAND is functionally complete: x′ = (xx)′, then AND and OR follow. NOR also works. AND, OR and XOR alone cannot make a NOT.',s:'UIUC'},
+ {q:'Simplify `x + x′y`.',o:['`x + y`','`x`','`y`','`x′y`'],w:'Distribute: (x + x′)(x + y) = 1·(x + y) = x + y.',s:'COLU'},
+ {q:'What is the dual of the law `x(y + z) = xy + xz`?',o:['`x + yz = (x + y)(x + z)`','`x + yz = xy + xz`','`x′(y′ + z′) = x′y′ + x′z′`','`(x + y)z = xz + yz`'],w:'Duality swaps + with · (and 0 with 1). It turns one distributive law into the other, which has no counterpart in ordinary arithmetic.',s:'COLU'},
+ {q:'Which expression writes `x ⊕ y` as a sum of minterms?',o:['`x′y + xy′`','`xy + x′y′`','`x + y`','`(x + y)(xy)`'],w:'XOR is 1 on rows 01 and 10, which are the minterms x′y and xy′. The second option is XNOR.',s:'COLU'},
+ {q:'Why are Karnaugh map columns ordered 00, 01, 11, 10?',o:['Neighbouring cells differ in exactly one variable.','It is binary counting order.','It lists the minterms with the most 1s first.','It makes the map symmetric.'],w:'This is Gray code. Two adjacent 1s then differ in one variable, which cancels: xyz + xyz′ = xy.',s:'UIUC'},
+ {q:'A half adder adds two bits x and y. Its sum and carry outputs are',o:['sum `x ⊕ y`, carry `xy`','sum `x + y`, carry `xy`','sum `xy`, carry `x ⊕ y`','sum `x ⊕ y`, carry `x + y`'],w:'1 + 1 = 10 in binary: sum bit 0 and carry 1. The sum bit is 1 exactly when the inputs differ.',s:'UIUC'},
+ {q:'In Boolean algebra, `x + x` equals',o:['`x`','`2x`','`1`','`0`'],w:'Idempotent law: x OR x is just x. There is no 2 in Boolean algebra.',s:'COLU'},
+ {q:'A sum-of-products expression for F has one minterm for each…',o:['row where F = 1','row where F = 0','variable','gate in the circuit'],w:'Each minterm is 1 on exactly one row. OR together the rows where F is 1. The product of maxterms uses the rows where F = 0.',s:'COLU'}]}
 ];
 
 /* ---------- briefings: what each layer teaches before you play ---------- */
@@ -451,7 +545,19 @@ graph:{intro:'Graphs model networks: vertices joined by edges. A handful of theo
  {t:'Walks that cover everything',b:'Euler circuit (every edge once): connected and every degree even. Hamiltonian cycle (every vertex once): no simple test is known; it is NP-complete.',ex:'The Königsberg bridges have four odd-degree land masses, so no walk crosses each bridge exactly once.'},
  {t:'Trees and colouring',b:'A tree on n vertices has n − 1 edges and a unique path between any two vertices. χ(G) is the fewest colours with no edge monochromatic. Bipartite ⇔ χ ≤ 2 ⇔ no odd cycle.',ex:'Exam scheduling: courses are vertices, shared students are edges, colours are time slots.'},
  {t:'Planarity, matchings, paths',b:'Planar connected graphs satisfy V − E + F = 2, hence E ≤ 3V − 6. Hall: X can be matched iff every S ⊆ X has |N(S)| ≥ |S|. Dijkstra finds shortest paths with nonnegative weights.',ex:'K₅ has V = 5, E = 10 > 3·5 − 6 = 9, so it is not planar.'}],
- trap:'Euler is about edges, Hamilton about vertices. The easy test only exists for Euler.'}
+ trap:'Euler is about edges, Hamilton about vertices. The easy test only exists for Euler.'},
+rec:{intro:'A recurrence defines each term from earlier ones. Solving it means finding a closed form, so you can jump straight to the millionth term or read off how fast an algorithm grows.',ideas:[
+ {t:'Unroll, guess, then prove',b:'Write out the first few terms, spot the pattern, then prove it by induction. Unrolling `aₙ = aₙ₋₁ + d` gives `aₙ = a₀ + nd`. Unrolling `aₙ = r·aₙ₋₁` gives `aₙ = a₀·rⁿ`.',ex:'Tower of Hanoi: T(n) = 2T(n − 1) + 1, T(1) = 1 gives 1, 3, 7, 15, … Guess T(n) = 2ⁿ − 1 and check: 2(2ⁿ⁻¹ − 1) + 1 = 2ⁿ − 1.'},
+ {t:'The characteristic equation',b:'For `aₙ = c₁aₙ₋₁ + c₂aₙ₋₂`, try `aₙ = rⁿ`. That gives `r² = c₁r + c₂`. Distinct roots: `aₙ = A·r₁ⁿ + B·r₂ⁿ`. A repeated root r: `aₙ = (A + Bn)·rⁿ`. The initial values fix A and B.',ex:'aₙ = 5aₙ₋₁ − 6aₙ₋₂ with a₀ = 1, a₁ = 4. The roots of r² − 5r + 6 are 2 and 3. A + B = 1 and 2A + 3B = 4 give A = −1, B = 2, so aₙ = 2·3ⁿ − 2ⁿ.'},
+ {t:'Non-homogeneous terms',b:'For `aₙ = c·aₙ₋₁ + d`, add a particular solution to the homogeneous one. If c ≠ 1, try a constant p: p = cp + d. If c = 1, the solution is linear: `aₙ = a₀ + dn`.',ex:'aₙ = 3aₙ₋₁ + 4: p = 3p + 4 gives p = −2, so aₙ = A·3ⁿ − 2. With a₀ = 0 we get A = 2 and aₙ = 2·3ⁿ − 2.'},
+ {t:'Divide and conquer, and generating functions',b:'Master theorem for `T(n) = aT(n/b) + Θ(nᵈ)`: if a < bᵈ it is Θ(nᵈ); if a = bᵈ it is Θ(nᵈ log n); if a > bᵈ it is Θ(n^(log_b a)). A generating function packs a sequence into a power series, such as `1/(1 − x) = 1 + x + x² + ⋯`.',ex:'Merge sort: T(n) = 2T(n/2) + n has a = 2 = bᵈ, so Θ(n log n). Karatsuba: T(n) = 3T(n/2) + n has 3 > 2, so Θ(n^(log₂ 3)) ≈ Θ(n^1.58).'}],
+ trap:'Watch the indexing and the initial values. An order-2 recurrence needs two starting values, and a₀ is the first term, not a₁.'},
+bool:{intro:'Boolean algebra is logic written as algebra on 0 and 1. Every digital circuit, from a light switch to a processor, is designed and simplified with it.',ideas:[
+ {t:'Operations and notation',b:'On {0, 1}: `x + y` is OR, `xy` is AND, and `x′` (also written x̄) is the complement. It is logic with 1 for true and 0 for false. Note that `1 + 1 = 1`.',ex:'For x = 1, y = 0, z = 1: `xy + z′` = 1·0 + 0 = 0, while `(x + y)z` = 1·1 = 1.'},
+ {t:'Laws for simplifying',b:'Identity `x + 0 = x`, `x·1 = x`. Idempotent `x + x = x`. Complement `x + x′ = 1`, `xx′ = 0`. Absorption `x + xy = x`. De Morgan `(xy)′ = x′ + y′`, `(x + y)′ = x′y′`. Both distributive laws hold, including `x + yz = (x + y)(x + z)`. Every law has a dual: swap + with · and 0 with 1.',ex:'`x + x′y = (x + x′)(x + y) = 1·(x + y) = x + y`.'},
+ {t:'Normal forms',b:'Every Boolean function is a sum of minterms: one product per row where it is 1, using every variable once, complemented where the row has 0. The dual form is a product of maxterms. With n variables there are 2ⁿ rows and `2^(2ⁿ)` functions.',ex:'XOR is 1 on rows 01 and 10, so `x ⊕ y = x′y + xy′`. There are 2^(2²) = 16 Boolean functions of two variables.'},
+ {t:'Gates, circuits and Karnaugh maps',b:'Gates compute AND, OR, NOT and XOR. NAND and NOR are each functionally complete on their own. A Karnaugh map lists rows in Gray-code order (00, 01, 11, 10) so neighbours differ in one variable. Grouping adjacent 1s in blocks of 1, 2, 4 or 8 removes variables.',ex:'Half adder: sum = `x ⊕ y`, carry = `xy`. On a K-map, `xyz + xyz′` is a block of two that merges into `xy`.'}],
+ trap:'Boolean algebra is not ordinary algebra. `x + x = x`, not 2x, and `x + yz = (x + y)(x + z)` is true even though it looks wrong.'}
 };
 
 /* ---------- glossary: every term and principle, by category ---------- */
@@ -643,7 +749,55 @@ graph:[
  {t:'Four Colour Theorem',d:'Every planar graph can be coloured with 4 colours.'},
  {t:'Matching',d:'A set of edges with no shared endpoints.'},
  {t:'Hall’s theorem',d:'A bipartite graph has a matching covering side X iff |N(S)| ≥ |S| for every S ⊆ X.'}
-]};
+],
+rec:[
+ {t:'Recurrence relation',d:'A rule that defines each term of a sequence from earlier terms.',ex:'aₙ = 2aₙ₋₁ + 1.'},
+ {t:'Initial conditions',d:'The starting values a recurrence needs before the rule can take over. An order-k recurrence needs k of them.'},
+ {t:'Closed form',d:'A formula for aₙ in terms of n alone, with no reference to earlier terms.',ex:'aₙ = 2ⁿ − 1 is a closed form for the Tower of Hanoi.'},
+ {t:'Unrolling (iteration)',d:'Substituting the recurrence into itself repeatedly to expose a pattern, which you then prove by induction.'},
+ {t:'Fibonacci numbers',d:'F₀ = 0, F₁ = 1, Fₙ = Fₙ₋₁ + Fₙ₋₂: 0, 1, 1, 2, 3, 5, 8, 13, … They count, for example, bit strings with no two consecutive 1s.'},
+ {t:'Order of a recurrence',d:'How far back the rule reaches. aₙ = aₙ₋₁ + aₙ₋₂ has order 2.'},
+ {t:'Linear homogeneous recurrence',d:'aₙ = c₁aₙ₋₁ + ⋯ + cₖaₙ₋ₖ with constant coefficients and no extra term.'},
+ {t:'Characteristic equation',d:'The polynomial equation rᵏ = c₁rᵏ⁻¹ + ⋯ + cₖ obtained by trying aₙ = rⁿ. Its roots give the solution.',ex:'aₙ = aₙ₋₁ + aₙ₋₂ gives r² = r + 1, with roots (1 ± √5)/2.'},
+ {t:'Distinct-roots solution',d:'If the characteristic roots r₁, r₂ are different, every solution is A·r₁ⁿ + B·r₂ⁿ.'},
+ {t:'Repeated-root solution',d:'If r is a double root, every solution is (A + Bn)·rⁿ.'},
+ {t:'Non-homogeneous recurrence',d:'A linear recurrence with an extra term f(n), such as aₙ = 3aₙ₋₁ + 4. Its solutions are a particular solution plus the homogeneous ones.'},
+ {t:'Particular solution',d:'Any one sequence satisfying the non-homogeneous recurrence, often found by guessing a form like a constant or a polynomial.'},
+ {t:'Tower of Hanoi',d:'Moving n discs needs T(n) = 2T(n − 1) + 1 = 2ⁿ − 1 moves.'},
+ {t:'Divide-and-conquer recurrence',d:'T(n) = aT(n/b) + f(n): a subproblems of size n/b plus f(n) work to split and combine.'},
+ {t:'Master theorem',d:'For T(n) = aT(n/b) + Θ(nᵈ): Θ(nᵈ) if a < bᵈ, Θ(nᵈ log n) if a = bᵈ, Θ(n^(log_b a)) if a > bᵈ.'},
+ {t:'Recursion tree',d:'A picture of the work done at each level of a divide-and-conquer recursion. Summing the levels solves the recurrence.'},
+ {t:'Generating function',d:'The power series a₀ + a₁x + a₂x² + ⋯ that encodes a sequence, so algebra on series solves counting problems.',ex:'1/(1 − x) = 1 + x + x² + ⋯ generates 1, 1, 1, …'},
+ {t:'Catalan numbers',d:'1, 1, 2, 5, 14, 42, … with Cₙ = C(2n, n)/(n + 1). They count balanced parenthesizations, binary trees and more.'}],
+bool:[
+ {t:'Boolean variable',d:'A variable that takes only the values 0 and 1.'},
+ {t:'Boolean function',d:'A function from {0, 1}ⁿ to {0, 1}. There are 2^(2ⁿ) of them on n variables.'},
+ {t:'Complement x′',d:'0′ = 1 and 1′ = 0. Also written x̄ or ¬x.'},
+ {t:'Boolean sum x + y',d:'OR: 1 when at least one input is 1.'},
+ {t:'Boolean product xy',d:'AND: 1 only when both inputs are 1.'},
+ {t:'Identity and domination laws',d:'x + 0 = x, x·1 = x; x + 1 = 1, x·0 = 0.'},
+ {t:'Idempotent laws',d:'x + x = x and xx = x.'},
+ {t:'Complement laws',d:'x + x′ = 1 and xx′ = 0. Double complement: (x′)′ = x.'},
+ {t:'Absorption laws',d:'x + xy = x and x(x + y) = x.'},
+ {t:'De Morgan’s laws',d:'(xy)′ = x′ + y′ and (x + y)′ = x′y′.'},
+ {t:'Distributive laws',d:'x(y + z) = xy + xz and, unlike ordinary algebra, x + yz = (x + y)(x + z).'},
+ {t:'Duality',d:'Swapping + with · and 0 with 1 in any law gives another valid law.'},
+ {t:'Literal',d:'A variable or its complement, such as x or y′.'},
+ {t:'Minterm',d:'A product containing every variable exactly once (plain or complemented). It is 1 on exactly one row.',ex:'For row x = 1, y = 0, z = 1 the minterm is xy′z.'},
+ {t:'Maxterm',d:'A sum containing every variable exactly once. It is 0 on exactly one row.'},
+ {t:'Sum of products (DNF)',d:'An OR of products. Every function is the sum of its minterms.'},
+ {t:'Product of sums (CNF)',d:'An AND of sums. Every function is the product of its maxterms.'},
+ {t:'Functionally complete',d:'A set of operations that can express every Boolean function. {AND, OR, NOT}, {NAND} and {NOR} all are.'},
+ {t:'Logic gate',d:'A circuit element computing a Boolean operation: AND, OR, NOT, XOR, NAND or NOR.'},
+ {t:'NAND and NOR',d:'NAND is (xy)′ and NOR is (x + y)′. Each alone can build every circuit.'},
+ {t:'XOR x ⊕ y',d:'1 when exactly one input is 1; equal to x′y + xy′.'},
+ {t:'Half adder',d:'Adds two bits: sum x ⊕ y and carry xy.'},
+ {t:'Full adder',d:'Adds two bits and an incoming carry: sum x ⊕ y ⊕ c, carry xy + c(x ⊕ y).'},
+ {t:'Karnaugh map',d:'A grid of a function’s rows in Gray-code order, so adjacent cells differ in one variable. Grouping adjacent 1s simplifies the function.'},
+ {t:'Gray code',d:'An ordering of bit strings where neighbours differ in exactly one bit: 00, 01, 11, 10.'},
+ {t:'Prime implicant',d:'A product term that implies the function and cannot lose any literal without failing to imply it. The largest K-map groups.'},
+ {t:'Don’t-care condition',d:'An input row whose output does not matter, so it can be treated as 0 or 1, whichever simplifies more.'}]
+};
 
 
 /* ---------- story: the rooms of a sleeping mind ---------- */
@@ -862,10 +1016,48 @@ const ROOMS=[
   wrong:['The Sleeper: See. Even you get lost.','The Sleeper: It slips away.'],
   notyet:'The Sleeper: Not yet. I’m not ready to wake up.',
   spare:['The Sleeper: The conjecture is false. And that is a theorem now: there exists a number where it fails. Proved. True forever.','The Sleeper: I read one lemma backwards. One mistake, not forty-seven. Not the whole of me.','The Sleeper: Examples were never proof. Doubt was never a set. A withdrawn talk can still be followed by a new one.','The Sleeper: The first step holds. The remainder was the one who saw it. Nobody is due anything. And the bridges are still there.','The Sleeper: Tomas. I should write back.','* The notebook opens.','* Light runs out along every fibre of the mind, all at once.'],
-  post:[]}
+  post:['* The desk is empty. She took the notebook with her.','* To the east, a door you have not seen before hums softly. Epilogue: Night School.']}
+},
+{id:'rec',name:'Auditory Cortex',sub:'epilogue · the hall of echoes',topic:'rec',variant:0,
+ intro:['* Epilogue: Night School.','* Six months on, Elin teaches again. Her mind is busy, and new rooms have grown in it.','* Here, every sound is built from the sounds before it. Somewhere ahead, something keeps eating its own tail.'],
+ npcs:[
+  {sym:'ʘ',name:'Pip the Rabbit',lines:['Pip: Hello! Every month each pair of us makes a new pair, but only once they are a month old.','Pip: So the number of pairs this month is last month’s pairs plus the pairs from two months ago. F(n) = F(n − 1) + F(n − 2).','Pip: Start with F(0) = 0 and F(1) = 1 and you get 0, 1, 1, 2, 3, 5, 8, 13…','Pip: To solve a rule like that, guess F(n) = rⁿ. You get r² = r + 1. The two roots are the golden ratio and its little sibling.','Pip: Every solution is A·r₁ⁿ + B·r₂ⁿ. The two starting values choose A and B. If a root repeats, use (A + Bn)·rⁿ instead.'],
+   codex:[{t:'Linear recurrences',b:'Fibonacci: Fₙ = Fₙ₋₁ + Fₙ₋₂ with F₀ = 0, F₁ = 1. Try aₙ = rⁿ to get the characteristic equation. Distinct roots: A·r₁ⁿ + B·r₂ⁿ. Repeated root r: (A + Bn)·rⁿ. Initial values fix A and B.'}]},
+  {sym:'≡',name:'The Tower Monk',lines:['The Tower Monk: I move discs between three pegs, never a large one on a small one.','The Tower Monk: To move n discs: move n − 1 aside, move the big one, move n − 1 back on top. So T(n) = 2T(n − 1) + 1.','The Tower Monk: Unroll it: 1, 3, 7, 15, 31. Guess T(n) = 2ⁿ − 1, then prove it by induction.','The Tower Monk: My younger brothers split problems in half instead. T(n) = 2T(n/2) + n is merge sort: n log n.','The Tower Monk: The master theorem compares a with bᵈ. Who wins, the leaves or the root, decides the answer.'],
+   codex:[{t:'Unrolling and divide and conquer',b:'Unroll a recurrence, guess a closed form, prove it by induction. Hanoi: T(n) = 2ⁿ − 1. Master theorem for T(n) = aT(n/b) + nᵈ: Θ(nᵈ) if a < bᵈ, Θ(nᵈ log n) if a = bᵈ, Θ(n^(log_b a)) if a > bᵈ.'}]}],
+ journal:['* A lesson plan, half written.','* “Week 10: recurrences. Remind them a recursive definition is not circular. It has a place to start. — E.M.”'],
+ boss:{id:'ouro',name:'Ouroboros',sym:'∞',orbit:10,need:5,pat:['ring','rain','sweep'],glyphs:['ₙ','₋','₁','∞','r²'],
+  pre:['Ouroboros: Every step needs the step before it. And that one needs the one before that.','Ouroboros: Down and down forever. So nothing can ever be known. I eat my own tail, and so does every recursion.','Ouroboros: She is the same. She can’t start the new paper until she fixes the old one, and she can’t fix that until…'],
+  intro:['* Ouroboros coils around the hall.'],
+  asks:['Ouroboros: Hint? Find where the chain begins. The initial values.','Ouroboros: Hint? Try aₙ = rⁿ and solve for r.','Ouroboros: Hint? Compare a with bᵈ.'],
+  right:['Ouroboros: ...the chain stops there. It has a bottom.','Ouroboros: You didn’t need every step. You found the formula.','Ouroboros: My tail slips out of my mouth.'],
+  wrong:['Ouroboros: Round and round.','Ouroboros: Back to the start. Forever.'],
+  notyet:'Ouroboros: Mercy? First show me where the chain begins.',
+  spare:['Ouroboros: The chain was never endless. It starts at a₀, and a closed form jumps straight to the end.','Ouroboros: A recursion is not a circle. It is a staircase with a bottom step.','Ouroboros: She doesn’t have to fix everything before she begins. She only needs the first step.','* You spared Ouroboros. It uncoils into a straight line pointing east.'],
+  post:['Ouroboros: aₙ depends on aₙ₋₁. And a₀ depends on nothing. That is enough.']}
+},
+
+{id:'bool',name:'Thalamus',sub:'epilogue · the relay station',topic:'bool',variant:1,
+ intro:['* The thalamus: the relay station, where every signal passes a gate before it reaches the cortex.','* Switches click on and off in the dark. Someone has painted every wall in exactly two colours.'],
+ npcs:[
+  {sym:'⊼',name:'NAND',lines:['NAND: I output 0 only when both my inputs are 1. That’s all I do.','NAND: And yet I can build anything. Feed x into both my inputs and I am NOT x.','NAND: Two of me make AND. Three make OR. With enough of me you can build a whole computer.','NAND: That’s called functional completeness. NOR can do it too. AND and OR alone cannot: they can never make a NOT.'],
+   codex:[{t:'Gates and functional completeness',b:'NAND(x, y) = (xy)′ alone builds every Boolean function: x′ = NAND(x, x), then AND and OR follow. NOR is complete too. {AND, OR} is not, since it cannot produce NOT. Half adder: sum x ⊕ y, carry xy.'}]},
+  {sym:'▦',name:'Karnaugh',lines:['Karnaugh: I keep my rows in Gray-code order: 00, 01, 11, 10. Neighbours differ in exactly one bit.','Karnaugh: So two neighbouring 1s, like xyz and xyz′, merge into xy. The variable that changed cancels out.','Karnaugh: Group 1s in blocks of 1, 2, 4 or 8, as large as you can. Each block is one simpler product.','Karnaugh: Laws do the same job on paper: x + xy = x, x + x′y = x + y, and De Morgan turns (xy)′ into x′ + y′.'],
+   codex:[{t:'Simplifying Boolean functions',b:'Every function is a sum of minterms (one per row where it is 1). K-maps order rows in Gray code so adjacent 1s merge: xyz + xyz′ = xy. Key laws: absorption x + xy = x, x + x′y = x + y, De Morgan (xy)′ = x′ + y′, and x + yz = (x + y)(x + z).'}]}],
+ journal:['* A sticky note on a switch.','* “I used to think there were two kinds of mathematician: right ones and frauds. Ask Tomas how many kinds he thinks there are. — E.”'],
+ boss:{id:'switch',name:'The Switch',sym:'⊕',orbit:8,need:5,pat:['sweep','aimed','bounce'],glyphs:['0','1','′','+','·'],diff:1.1,
+  pre:['The Switch: Zero or one. True or false. Right or wrong. There is nothing in between.','The Switch: She was right for nineteen years, then she was wrong. So she is a 0 now. That’s just Boolean algebra.','The Switch: Prove me wrong. Using only zeros and ones.'],
+  intro:['* The Switch flicks itself on and off, very fast.'],
+  asks:['The Switch: Hint? A minterm is 1 on exactly one row.','The Switch: Hint? Absorption: x + xy = x.','The Switch: Hint? De Morgan swaps + and · and complements everything.'],
+  right:['The Switch: ...click.','The Switch: Two values, and you built that from them?','The Switch: My wiring hums.'],
+  wrong:['The Switch: Zero.','The Switch: Off.'],
+  notyet:'The Switch: Mercy is not a value I have. Not yet.',
+  spare:['The Switch: Two values were never the limit. With a few gates they build every function there is.','The Switch: A circuit has to be 0 or 1. A person doesn’t. She was wrong about one lemma, and right about how to teach.','The Switch: Both of those are true at once, and nothing breaks.','* You spared The Switch. Every relay in the station clicks on.'],
+  post:['The Switch: 1. Also, sometimes, a third thing. Don’t tell the engineers.']}
 }
 ];
 
+const EPI_ENDING=['A Tuesday evening, room 2.04.','Elin Mar writes on the board: “Week 12. Recurrences and Boolean algebra. And one lecture on being wrong.”','Tomas is in the back row, taking notes for the paper they are writing together.','A student asks if mistakes count against you in mathematics. She smiles: “Only the ones you hide.”','The spark settles somewhere warm, and listens.'];
 const ENDING=['Six months later.','A preprint appears online: “A Counterexample to the Mar Conjecture, and What It Taught Us.” Authors: Tomas Ilić and Elin Mar.','Its first line: “We show the conjecture is false. This paper is about why that is good news.”','In the acknowledgements: “To the students who check our work. Especially when we are wrong.”','Somewhere in the cortex, a small spark is still moving. It doesn’t need to. It just likes to.'];
 
 /* ---------- engine ---------- */
@@ -880,7 +1072,7 @@ fitCanvas();addEventListener('resize',fitCanvas);
 const held={},pressed={};
 const KEYMAP={ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down',ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',KeyZ:'a',Enter:'a',Space:'a',NumpadEnter:'a',KeyX:'b',ShiftLeft:'b',ShiftRight:'b',Escape:'b',Backspace:'b',KeyC:'c',KeyM:'m'};
 function press(k){if(!held[k])pressed[k]=true;held[k]=true;audioInit()}
-addEventListener('keydown',e=>{const k=KEYMAP[e.code];if(!k)return;if(codexEl.open){if(e.target.tagName==='INPUT'&&e.code!=='Escape')return;if(k==='c'||k==='b'){e.preventDefault();closeCodex()}return}e.preventDefault();press(k)});
+addEventListener('keydown',e=>{if(window.XP&&window.XP.isOpen())return;const k=KEYMAP[e.code];if(!k)return;if(codexEl.open){if(e.target.tagName==='INPUT'&&e.code!=='Escape')return;if(k==='c'||k==='b'){e.preventDefault();closeCodex()}return}e.preventDefault();press(k)});
 addEventListener('keyup',e=>{const k=KEYMAP[e.code];if(k)held[k]=false});
 document.querySelectorAll('[data-k]').forEach(b=>{const k=b.dataset.k;
   b.addEventListener('pointerdown',e=>{e.preventDefault();try{b.setPointerCapture?.(e.pointerId)}catch(_){}if(k==='c'){toggleCodex();return}press(k)});
@@ -931,6 +1123,8 @@ function buildRoom(i){const def=ROOMS[i];const map=[...Array(ROWS)].map((_,r)=>[
   const stars=[...Array(26)].map(()=>[TS+rr()*(CW-2*TS),OY+TS+rr()*(ROWS-2)*TS]);
   R={i,def,map,ents,boss,stars};
 }
+const MAIN_T=()=>TOPICS.filter(t=>t.id!=='rec'&&t.id!=='bool');
+const TOTAL=()=>ST.spared.sleeper?13:11;
 const locked=()=>R.i<ROOMS.length-1&&!ST.spared[R.boss.id];
 function solidTile(c,r){if(c<0||r<0||c>=COLS||r>=ROWS)return false;if(R.map[r][c])return true;if(c===COLS-1&&r>=6&&r<=8&&locked())return true;return R.ents.some(e=>e.x===c&&e.y===r)}
 function blocked(px,py){const h=6;for(const[dx,dy]of[[-h,-h],[h,-h],[-h,h],[h,h]]){const c=Math.floor((px+dx)/TS),r=Math.floor((py+dy-OY)/TS);if(solidTile(c,r))return true}return false}
@@ -1001,7 +1195,10 @@ document.getElementById('tabFound').onclick=()=>{cxTab='found';renderCx()};docum
 function openCodex(){renderCx();codexEl.showModal?codexEl.showModal():codexEl.setAttribute('open','')}
 function closeCodex(){codexEl.close?codexEl.close():codexEl.removeAttribute('open')}
 function toggleCodex(){codexEl.open?closeCodex():openCodex()}
-document.getElementById('codexBtn').onclick=toggleCodex;document.getElementById('codexClose').onclick=closeCodex;
+document.getElementById('codexBtn').onclick=toggleCodex;
+window.XP_GAME='sleeping-proof';
+window.XP_INFO=()=>({game:'The Sleeping Proof',col:'Guardian',cell:t=>{const r=ROOMS.find(r=>r.topic===t.id);return r&&ST.spared[r.boss.id]?'spared':'—'},line:`Guardians spared: ${Object.keys(ST.spared).length} of ${TOTAL()}.`});
+document.getElementById('studyBtn').onclick=()=>{if(codexEl.open)closeCodex();XP.open('exam')};document.getElementById('codexClose').onclick=closeCodex;
 let toastT=0,toastMsg='';function toast(m){toastMsg=m;toastT=110}
 
 /* interactions */
@@ -1054,7 +1251,7 @@ function drawPlayer(t){PL.trail.forEach(([x,y],i)=>{g.fillStyle=yc(i/PL.trail.le
   const off={up:[0,-9],down:[0,9],left:[-9,0],right:[9,0]}[PL.face];g.fillStyle=yc(.7);g.beginPath();g.arc(PL.x+off[0],PL.y+off[1],1.5,0,6.283);g.fill()}
 function drawHUD(t){g.fillStyle='rgba(8,8,7,.9)';g.fillRect(0,0,CW,OY);g.strokeStyle=yc(.2);g.beginPath();g.moveTo(0,OY-.5);g.lineTo(CW,OY-.5);g.stroke();
   g.font='italic 19px '+SERIF;g.fillStyle=yc(1);g.fillText(R.def.name,14,22);const w=g.measureText(R.def.name).width;g.font='11px '+MONO;g.fillStyle=yc(.5);g.fillText(R.def.sub.toUpperCase(),24+w,21);
-  g.textAlign='right';g.fillStyle=yc(.85);g.fillText(`HP ${ST.hp}/${MAXHP}   COFFEE ${ST.coffee}   ${Object.keys(ST.spared).length}/11 SPARED`,CW-14,21);g.textAlign='left';
+  g.textAlign='right';g.fillStyle=yc(.85);g.fillText(`HP ${ST.hp}/${MAXHP}   COFFEE ${ST.coffee}   ${Object.keys(ST.spared).length}/${TOTAL()} SPARED`,CW-14,21);g.textAlign='left';
   const e=!DLG&&nearEnt();if(e){const cx=e.x*TS+TS/2,cy=OY+e.y*TS-6;g.fillStyle='rgba(8,8,7,.9)';g.fillRect(cx-11,cy-17,22,17);g.strokeStyle=yc(.8);g.lineWidth=1;g.strokeRect(cx-11,cy-17,22,17);g.fillStyle=yc(1);g.font='11px '+MONO;g.textAlign='center';g.fillText('Z',cx,cy-5);g.textAlign='left'}
   if(R.i===0&&!DLG&&!ST.spared.echo){g.font='12px '+MONO;g.fillStyle=yc(.45);g.textAlign='center';g.fillText('arrows / WASD move · Z talk · X back · C codex',CW/2,CH-10);g.textAlign='left'}
 }
@@ -1063,13 +1260,16 @@ function drawWorld(t){drawFloorAndWalls(t);R.ents.forEach(e=>drawEnt(e,t));drawP
 /* battle */
 function startBattle(e){
   const def=e;const topic=R.def.topic;let pool;
-  if(def.qs)pool=def.qs.slice();else if(topic==='all')pool=TOPICS.flatMap(t=>t.qs);else pool=TOPICS.find(t=>t.id===topic).qs.slice();
-  const gens=topic==='all'?TOPICS.flatMap(t=>t.gen||[]):topic?(TOPICS.find(t=>t.id===topic)?.gen||[]):[];
+  pool=handPool(def);
+  const gens=(topic==='all'?MAIN_T():TOPICS.filter(t=>t.id===topic)).flatMap(t=>(t.gen||[]).map((_,i)=>({t,i})));
   B={def,pool:shuffle(pool),gens,used:0,resolve:0,need:def.need,phase:'queue',queue:[],menu:0,sel:0,q:null,soul:{x:320,y:322},bul:[],dodge:null,inv:0,boxR:{x:32,y:250,w:576,h:140},ready:false,askI:0,shake:0,spareFlash:0,diff:(def.diff||(.62+R.i*.07))};
   sfx.sel();S.mode='battle';
   B.queue=def.intro.map(x=>({type:'text',text:x}));
 }
-function nextQ(){if(B.gens.length&&Math.random()<.55)return pick(B.gens)();if(!B.pool.length)B.pool=shuffle(B.def.qs||(R.def.topic==='all'?TOPICS.flatMap(t=>t.qs):TOPICS.find(t=>t.id===R.def.topic).qs));return B.pool.pop()}
+// questions carry their topic and source so the study hall can log misses
+const tagH=t=>t.qs.map((q,i)=>({...q,_t:t.id,_h:i}));
+function handPool(def){const topic=R.def.topic;if(def.qs)return def.qs.map(q=>({...q,_t:topic==='all'?null:topic}));return(topic==='all'?MAIN_T():TOPICS.filter(t=>t.id===topic)).flatMap(tagH)}
+function nextQ(){if(B.gens.length&&Math.random()<.55){const g=pick(B.gens);return{...g.t.gen[g.i](),_t:g.t.id,_g:g.i}}if(!B.pool.length)B.pool=shuffle(handPool(B.def));return B.pool.pop()}
 function pushText(arr){arr.forEach(x=>B.queue.push({type:'text',text:x}))}
 function pushDodge(mult){B.queue.push({type:'dodge',mult})}
 function runQueue(){const step=B.queue.shift();if(!step){B.phase='menu';return}
@@ -1095,7 +1295,7 @@ function updDodge(dt){const D=B.dodge;D.t+=dt;const d=D.d;
   if(B.inv>0)B.inv-=dt;else for(const b of B.bul){if(Math.hypot(b.x-B.soul.x,b.y-B.soul.y)<9){ST.hp=Math.max(0,ST.hp-(2+Math.round(B.diff*1.5)));B.inv=50;sfx.hit();B.shake=10;break}}
   if(ST.hp<=0){B.phase='dead';B.bul=[];return}
   if(D.t>=D.dur){B.bul=[];runQueue()}}
-function answer(i){const q=B.q,ok=B.order[i]===0;ST.stats.asked++;if(ok)ST.stats.right++;
+function answer(i){const q=B.q,ok=B.order[i]===0;ST.stats.asked++;if(ok)ST.stats.right++;window.XP&&XP.rec(q._t,q,ok);
   const chosen=q.o[B.order[i]].replace(/`/g,'');
   const ex='* '+(q.w||'').replace(/`/g,'');
   if(ok){sfx.ok();window.bgFire&&window.bgFire(1.2);B.resolve=Math.min(B.need,B.resolve+1);pushText(['* You reason: '+chosen,pick(B.def.right),ex]);pushDodge(.55)}
@@ -1118,7 +1318,7 @@ function updBattle(dt){if(B.shake>0)B.shake-=dt;
   if(B.phase==='question'){const n=B.order.length;if(take('up')){B.sel=(B.sel+n-1)%n;sfx.blip()}if(take('down')){B.sel=(B.sel+1)%n;sfx.blip()}
     if(take('b')){B.phase='menu';return}if(take('a')){answer(B.sel)}}}
 function winBattle(){const id=B.def.id;ST.spared[id]=1;unlock(R.def.id+':trap');persist();window.bgFire&&window.bgFire(3);
-  if(id==='sleeper'){fadeThen(()=>{S.mode='ending';S.endPage=0;B=null});B.phase='done';return}
+  if(id==='sleeper'||id==='switch'){const set=id==='switch'?EPI_ENDING:ENDING;fadeThen(()=>{S.mode='ending';S.endPage=0;S.endSet=set;B=null});B.phase='done';return}
   B.phase='done';fadeThen(()=>{S.mode='world';B=null;say([`* The way forward is open.`])})}
 
 function drawEnemy(t){const d=B.def,cx=320+(B.shake>0?Math.sin(t/20)*B.shake*.6:0),cy=B.phase==='question'?96:118,n=d.orbit||7,R0=B.phase==='question'?54:66;
@@ -1175,11 +1375,11 @@ function drawTitle(t){g.textAlign='center';g.font='12px '+MONO;g.fillStyle=yc(.5
   g.font='14px '+MONO;g.fillStyle=yc(.65);g.fillText('A mathematician stopped believing in her own mind.',320,326);g.fillText('You are the last thought still moving through it.',320,348);
   titleItems().forEach((s,k)=>{const y=398+k*30,sel=k===S.menu;g.font=(sel?'italic 24px ':'22px ')+SERIF;g.fillStyle=yc(sel?1:.5);g.fillText(s,320,y);if(sel){const w=g.measureText(s).width;drawSoul(320-w/2-20,y-7,t)}});
   g.font='11px '+MONO;g.fillStyle=yc(.35);g.fillText('Z or tap to choose · arrows to move',320,462);g.textAlign='left'}
-function updEnding(){if(take('a')){S.endPage++;sfx.blip();if(S.endPage>ENDING.length+1){ST.done=true;persist();S.mode='title';S.menu=0}}}
-function drawEnding(t){g.textAlign='center';if(S.endPage<ENDING.length){const lines=wrap(ENDING[S.endPage],'italic 26px '+SERIF,500);g.font='italic 26px '+SERIF;g.fillStyle=yc(1);lines.forEach((l,k)=>g.fillText(l,320,220+k*34-lines.length*17))}
-  else if(S.endPage===ENDING.length){g.font='72px '+SERIF;g.fillStyle=yc(1);g.fillText('The End',320,220);g.font='italic 24px '+SERIF;g.fillStyle=yc(.75);g.fillText('Thank you for reasoning.',320,262)}
+function updEnding(){const E=S.endSet||ENDING;if(take('a')){S.endPage++;sfx.blip();if(S.endPage>E.length+1){ST.done=true;persist();S.mode='title';S.menu=0}}}
+function drawEnding(t){const E=S.endSet||ENDING,epi=E===EPI_ENDING;g.textAlign='center';if(S.endPage<E.length){const lines=wrap(E[S.endPage],'italic 26px '+SERIF,500);g.font='italic 26px '+SERIF;g.fillStyle=yc(1);lines.forEach((l,k)=>g.fillText(l,320,220+k*34-lines.length*17))}
+  else if(S.endPage===E.length){g.font='72px '+SERIF;g.fillStyle=yc(1);g.fillText(epi?'Class Dismissed':'The End',320,220);g.font='italic 24px '+SERIF;g.fillStyle=yc(.75);g.fillText(epi?'See you next term.':'Thank you for reasoning.',320,262)}
   else{const got=allCodex().flatMap(x=>x.items).filter(it=>ST.codex[it.key]).length,acc=ST.stats.asked?Math.round(100*ST.stats.right/ST.stats.asked):0;g.font='italic 30px '+SERIF;g.fillStyle=yc(1);g.fillText('What you carried',320,170);g.font='15px '+MONO;g.fillStyle=yc(.8);
-    [`Guardians spared: 11 of 11`,`Questions reasoned through: ${ST.stats.asked}`,`Answered correctly: ${ST.stats.right} (${acc}%)`,`Codex entries found: ${got}`,'','Your Codex stays open: press C any time to review.'].forEach((l,k)=>g.fillText(l,320,220+k*28))}
+    [`Guardians spared: ${Object.keys(ST.spared).length} of ${epi?13:11}`,`Questions reasoned through: ${ST.stats.asked}`,`Answered correctly: ${ST.stats.right} (${acc}%)`,`Codex entries found: ${got}`,'','Your Codex stays open: press C any time to review.'].forEach((l,k)=>g.fillText(l,320,220+k*28))}
   g.font='11px '+MONO;g.fillStyle=yc(.4);g.fillText('Z to continue',320,462);g.textAlign='left'}
 
 /* main loop */
@@ -1188,7 +1388,7 @@ function frame(now){const dt=Math.min(3,(now-last)/16.67);last=now;S.t=now;
   if(take('m'))setMute(!muted);
   if(S.fade>0){S.fade+=.06*dt;if(S.fade>=1&&S.fadeTo){const f=S.fadeTo;S.fadeTo=null;f();S.fade=-1}}
   else if(S.fade<0){S.fade+=.06*dt;if(S.fade>=0)S.fade=0}
-  if(!codexEl.open&&S.fade===0){if(S.mode==='title')updTitle();else if(S.mode==='world')updWorld(dt);else if(S.mode==='battle')updBattle(dt);else if(S.mode==='ending')updEnding()}
+  if(!codexEl.open&&!(window.XP&&window.XP.isOpen())&&S.fade===0){if(S.mode==='title')updTitle();else if(S.mode==='world')updWorld(dt);else if(S.mode==='battle')updBattle(dt);else if(S.mode==='ending')updEnding()}
   g.clearRect(0,0,CW,CH);g.fillStyle='rgba(10,10,9,.84)';g.fillRect(0,0,CW,CH);
   if(S.mode==='title')drawTitle(now);else if(S.mode==='world')drawWorld(now);else if(S.mode==='battle'){drawBattle(now)}else if(S.mode==='ending')drawEnding(now);
   if(toastT>0){toastT-=dt;g.font='12px '+MONO;const w=g.measureText(toastMsg).width+24;g.fillStyle='rgba(8,8,7,.92)';g.fillRect(CW-w-12,OY+10,w,26);g.strokeStyle=GOOD;g.strokeRect(CW-w-12+.5,OY+10.5,w-1,25);g.fillStyle=GOOD;g.fillText(toastMsg,CW-w,OY+27)}
@@ -1197,6 +1397,218 @@ function frame(now){const dt=Math.min(3,(now-last)/16.67);last=now;S.t=now;
   requestAnimationFrame(frame)}
 (document.fonts?document.fonts.ready:Promise.resolve()).then(()=>requestAnimationFrame(frame));
 window.__game={layoutQ,S,get B(){return B},get R(){return R},get DLG(){return DLG},ST:()=>ST,press,held,PL,codexEl,enterRoom,startBattle,nextQ:()=>nextQ()};
+
+/* ---------- study hall ---------- */
+// Exam mode, mistakes review and certificate, shared by both games.
+// Each game sets window.XP_GAME and window.XP_INFO before opening it.
+const XP=(()=>{
+  const K=(window.XP_GAME||'synapse')+'-study-v1';
+  let D=(()=>{try{return JSON.parse(localStorage.getItem(K))||{}}catch(e){return{}}})();
+  D.tally=D.tally||{};D.miss=D.miss||{};D.exams=D.exams||[];D.name=D.name||'';
+  const sv=()=>{try{localStorage.setItem(K,JSON.stringify(D))}catch(e){}};
+  const T=id=>TOPICS.find(t=>t.id===id);
+  const keyOf=(tid,q)=>tid+'|'+(q._g!=null?'g'+q._g:q._h!=null?'h'+q._h:'x');
+  const gq=(t,i)=>({...t.gen[i](),_t:t.id,_g:i});
+  const hq=(t,i)=>({...t.qs[i],_t:t.id,_h:i});
+  const anyQ=t=>t.gen&&t.gen.length&&Math.random()<.65?gq(t,rnd(0,t.gen.length-1)):hq(t,rnd(0,t.qs.length-1));
+  const plain=s=>String(s).replace(/`/g,'');
+  const pct=(r,n)=>n?Math.round(100*r/n):0;
+  const dstr=at=>new Date(at).toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
+
+  // every answered question in either game passes through here
+  function rec(tid,q,ok){if(!tid||!T(tid)||!q)return;const t=D.tally[tid]||(D.tally[tid]={a:0,r:0});t.a++;if(ok)t.r++;
+    if(!ok){const k=keyOf(tid,q),m=D.miss[k]||(D.miss[k]={n:0});m.n=Math.min(3,m.n+1);m.at=Date.now();m.q=plain(q.q).slice(0,160)}
+    sv()}
+  const missCount=()=>Object.keys(D.miss).filter(k=>T(k.split('|')[0])).length;
+
+  /* overlay shell */
+  const css=`#xp{position:fixed;inset:0;z-index:60;overflow-y:auto;background:#0c0c0b;color:#ece7dc;font-family:var(--body);-webkit-font-smoothing:antialiased}
+#xp[hidden]{display:none}
+#xp .xw{max-width:780px;margin:0 auto;padding:18px 16px 60px}
+#xp .xbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid rgba(236,231,220,.13);margin-bottom:20px}
+#xp .xbar h2{font-family:var(--display);font-weight:400;font-size:28px;margin:0 auto 0 0;line-height:1}
+#xp .xb{font:600 13.5px var(--body);color:#ece7dc;background:rgba(18,18,16,.6);border:1px solid rgba(236,231,220,.3);border-radius:999px;padding:9px 16px;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+#xp .xb:hover{border-color:#ece7dc}#xp .xb.on,#xp .xb.solid{background:#ece7dc;color:#0c0c0b;border-color:#ece7dc}
+#xp .xb:disabled{opacity:.4;cursor:default}
+#xp .xb small{font-family:var(--mono);font-size:10.5px;opacity:.65;font-weight:400}
+#xp .xe{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(236,231,220,.44)}
+#xp h3{font-family:var(--display);font-weight:400;font-size:30px;line-height:1.1;margin:6px 0 10px}
+#xp p{color:rgba(236,231,220,.75);line-height:1.6;margin:0 0 12px}
+#xp .xcard{border:1px solid rgba(236,231,220,.16);border-radius:14px;padding:20px;background:rgba(236,231,220,.03);margin-bottom:14px}
+#xp .xrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 16px}
+#xp .xchip{font:11.5px var(--mono);letter-spacing:.04em;padding:7px 12px;border-radius:999px;border:1px solid rgba(236,231,220,.3);background:none;color:rgba(236,231,220,.75);cursor:pointer}
+#xp .xchip[aria-pressed="true"]{background:#ece7dc;color:#0c0c0b;border-color:#ece7dc}
+#xp .xq{font-family:var(--display);font-size:clamp(22px,4.4vw,28px);line-height:1.25;margin:8px 0 16px;color:#ece7dc}
+#xp .m,#xp .xq .m{font-family:var(--mono);font-size:.82em;background:rgba(236,231,220,.08);padding:1px 6px;border-radius:5px;white-space:nowrap}
+#xp .xopts{display:grid;gap:8px}
+#xp .xo{display:flex;gap:12px;align-items:flex-start;text-align:left;font:15px/1.45 var(--body);color:#ece7dc;background:rgba(18,18,16,.6);border:1px solid rgba(236,231,220,.22);border-radius:11px;padding:12px 14px;cursor:pointer;width:100%}
+#xp .xo:hover:not(:disabled){border-color:#ece7dc}
+#xp .xo .l{font-family:var(--mono);font-size:12px;opacity:.55;padding-top:2px}
+#xp .xo.pick{background:rgba(236,231,220,.14);border-color:#ece7dc}
+#xp .xo.right{border-color:#a8cfa6;background:rgba(168,207,166,.12)}#xp .xo.wrong{border-color:#e39b87;background:rgba(227,155,135,.12)}
+#xp .xo:disabled{cursor:default}#xp .xo.dim{opacity:.45}
+#xp .xfb{margin-top:14px;padding:12px 14px;border-radius:11px;border-left:3px solid #a8cfa6;background:rgba(168,207,166,.07)}
+#xp .xfb.bad{border-color:#e39b87;background:rgba(227,155,135,.07)}#xp .xfb b{display:block;margin-bottom:4px}
+#xp .xtimer{font-family:var(--mono);font-size:20px;letter-spacing:.04em}#xp .xtimer.low{color:#e39b87}
+#xp .xpal{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0}
+#xp .xpal button{width:32px;height:32px;border-radius:8px;border:1px solid rgba(236,231,220,.25);background:none;color:rgba(236,231,220,.7);font:11px var(--mono);cursor:pointer}
+#xp .xpal button.done{background:rgba(236,231,220,.16);color:#ece7dc}#xp .xpal button.cur{border-color:#ece7dc;border-width:2px}
+#xp .xnav{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;margin-top:18px}
+#xp .xbig{font-family:var(--display);font-size:clamp(64px,13vw,110px);line-height:1;margin:4px 0}
+#xp table{width:100%;border-collapse:collapse;font-size:14px}
+#xp td,#xp th{padding:8px 6px;border-bottom:1px solid rgba(236,231,220,.1);text-align:left;vertical-align:middle}
+#xp th{font:10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:rgba(236,231,220,.44);font-weight:400}
+#xp .xbarv{height:6px;border-radius:3px;background:rgba(236,231,220,.1);overflow:hidden;min-width:60px}#xp .xbarv i{display:block;height:100%;background:#ece7dc}
+#xp details{border:1px solid rgba(236,231,220,.13);border-radius:11px;padding:10px 14px;margin-bottom:8px}
+#xp summary{cursor:pointer;font-size:14.5px}#xp details p{margin:8px 0 0;font-size:14px}
+#xp .ok{color:#a8cfa6}#xp .no{color:#e39b87}
+#xp .xin{font:16px var(--body);padding:11px 14px;border-radius:10px;border:1px solid rgba(236,231,220,.3);background:rgba(0,0,0,.35);color:#ece7dc;width:min(100%,360px)}
+#xp .cert{background:#f5f0e6;color:#1b1a17;border-radius:4px;padding:clamp(18px,5vw,46px);position:relative;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#xp .cert .fr{border:1.5px solid #1b1a17;outline:1px solid #1b1a17;outline-offset:5px;padding:clamp(16px,4vw,36px);text-align:center}
+#xp .cert .ce{font:10.5px var(--mono);letter-spacing:.22em;text-transform:uppercase;color:#6b665c}
+#xp .cert h4{font-family:var(--display);font-weight:400;font-size:clamp(30px,6vw,48px);margin:10px 0 4px;line-height:1.05}
+#xp .cert .nm{font-family:var(--display);font-style:italic;font-size:clamp(28px,6vw,44px);border-bottom:1px solid #1b1a17;display:inline-block;padding:0 18px 2px;margin:14px 0 8px;min-width:60%}
+#xp .cert p{color:#3a3832;margin:6px auto;max-width:520px;font-size:14px}
+#xp .cert table{margin:18px 0 6px;font-size:13px;text-align:left}#xp .cert td,#xp .cert th{border-color:#d7d0c2;color:#1b1a17;padding:6px 5px}#xp .cert th{color:#6b665c}
+#xp .cert .xbarv{background:#e2dbcd}#xp .cert .xbarv i{background:#1b1a17}
+#xp .cert .sig{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-top:22px;text-align:left}
+#xp .cert .sig div{flex:1;min-width:150px;border-top:1px solid #1b1a17;padding-top:6px;font-size:12.5px;color:#3a3832}
+#xp .cert .sig b{display:block;font-family:var(--display);font-size:18px;font-weight:400;color:#1b1a17}
+@media (max-width:520px){#xp .hide-s{display:none}#xp td,#xp th{padding:7px 3px}}
+@media print{@page{size:A4 landscape;margin:10mm}
+ body>*:not(#xp){display:none!important}html,body{background:#fff!important;overflow:visible!important;height:auto!important;min-height:0!important}
+ #xp{position:static;background:#fff;overflow:visible;height:auto}#xp .cert,#xp .xw{break-after:avoid}#xp .xw{max-width:none;padding:0}#xp .noprint{display:none!important}
+ :root{color-scheme:light!important}#xp .cert{border-radius:0;padding:4mm;break-inside:avoid}#xp .cert .fr{padding:7mm 10mm}#xp .cert h4{font-size:42px;margin:6px 0 4px}#xp .cert .nm{font-size:36px;margin:8px 0 6px}#xp .cert p{font-size:13px;margin:4px auto}#xp .cert table{font-size:12px;margin:12px 0 4px}#xp .cert td,#xp .cert th{padding:4px 6px}#xp .cert .sig{margin-top:10px}#xp .cert .sig b{font-size:15px}#xp .cert .sig div{font-size:11px}}`;
+  let root=null,body=null,tab='exam',E=null,R=null,onClose=null;
+  function ensure(){if(root)return;const st=document.createElement('style');st.textContent=css;document.head.append(st);
+    root=el('div',{id:'xp',role:'dialog','aria-modal':'true','aria-label':'Study hall',hidden:true});
+    const w=el('div',{class:'xw'});body=el('div',{});
+    w.append(el('div',{class:'xbar noprint'},el('h2',{},'Study hall'),
+      el('button',{class:'xb',id:'xpTabExam',onclick:()=>go('exam')},'Exam mode'),
+      el('button',{class:'xb',id:'xpTabRev',onclick:()=>go('review')},'Mistakes'),
+      el('button',{class:'xb',id:'xpTabCert',onclick:()=>go('cert')},'Certificate'),
+      el('button',{class:'xb',id:'xpClose',onclick:close},'Close',el('small',{},'Esc'))),body);
+    root.append(w);document.body.append(root);
+    document.addEventListener('keydown',e=>{if(isOpen())onKey(e)},true)}
+  function tabs(){[['exam','xpTabExam'],['review','xpTabRev'],['cert','xpTabCert']].forEach(([t,id])=>{const b=document.getElementById(id);b.classList.toggle('on',tab===t);b.setAttribute('aria-pressed',String(tab===t))});
+    document.getElementById('xpTabRev').innerHTML='Mistakes <small>'+missCount()+'</small>'}
+  function leaveExam(){if(E&&!E.done){if(!confirm('Leave the exam? Your answers so far will not be marked.'))return false;clearTimeout(E.timer);E=null}return true}
+  function go(t){if(t!=='exam'&&!leaveExam())return;if(t==='exam'&&E&&!E.done)return;tab=t;R=null;if(t!=='exam')E=null;tabs();
+    body.innerHTML='';({exam:examSetup,review:reviewStart,cert:certView})[t]();root.scrollTop=0;}
+  function open(t,cb){ensure();onClose=cb||null;root.hidden=false;document.body.style.overflow='hidden';E=null;go(t||'exam');setTimeout(()=>document.getElementById('xpClose').focus({preventScroll:true}),30)}
+  function close(){if(!leaveExam())return;E=null;R=null;root.hidden=true;document.body.style.overflow='';onClose&&onClose()}
+  const isOpen=()=>!!root&&!root.hidden;
+  function onKey(e){e.stopPropagation();if(e.key==='Escape'){e.preventDefault();close();return}
+    if(e.target.tagName==='INPUT')return;
+    if(/^[1-4]$/.test(e.key)||/^[a-d]$/i.test(e.key)){const k=/\d/.test(e.key)?+e.key-1:'abcd'.indexOf(e.key.toLowerCase());const b=body.querySelectorAll('.xo')[k];if(b&&!b.disabled){e.preventDefault();b.click()}}
+    else if(e.key==='Enter'&&e.target.tagName!=='BUTTON'){const n=body.querySelector('[data-next]');if(n&&!n.disabled){e.preventDefault();n.click()}}}
+
+  function options(q,order,onPick,sel){const box=el('div',{class:'xopts',role:'group'});
+    order.forEach((oi,k)=>box.append(el('button',{class:'xo'+(sel===oi?' pick':''),'data-i':oi,onclick:()=>onPick(oi)},el('span',{class:'l'},'ABCD'[k]),el('span',{html:fmt(q.o[oi])}))));return box}
+
+  /* exam */
+  let cfg={n:20,min:30,topics:null};
+  function examSetup(){const ids=TOPICS.map(t=>t.id);if(!cfg.topics)cfg.topics=ids.slice();
+    const last=D.exams[0],best=D.exams.reduce((b,x)=>!b||x.pct>b.pct?x:b,null);
+    const chips=(vals,key,fmtv)=>el('div',{class:'xrow'},vals.map(v=>el('button',{class:'xchip','aria-pressed':String(cfg[key]===v),onclick:()=>{cfg[key]=v;go('exam')}},fmtv(v))));
+    body.append(el('span',{class:'xe'},'Exam mode'),el('h3',{},'A timed, mixed test'),
+      el('p',{},'Questions come from every layer you choose, mixed together. There are no hints and no feedback until you submit, and you can move back and forth between questions. Questions are freshly generated each time.'),
+      el('div',{class:'xcard'},el('span',{class:'xe'},'Questions'),chips([10,20,30],'n',v=>v+' questions'),
+        el('span',{class:'xe'},'Time limit'),chips([15,30,45],'min',v=>v+' minutes'),
+        el('span',{class:'xe'},'Topics · '+cfg.topics.length+' of '+ids.length),
+        el('div',{class:'xrow'},el('button',{class:'xchip','aria-pressed':String(cfg.topics.length===ids.length),onclick:()=>{cfg.topics=cfg.topics.length===ids.length?[]:ids.slice();go('exam')}},'All'),
+          TOPICS.map(t=>el('button',{class:'xchip','aria-pressed':String(cfg.topics.includes(t.id)),onclick:()=>{cfg.topics=cfg.topics.includes(t.id)?cfg.topics.filter(x=>x!==t.id):[...cfg.topics,t.id];go('exam')}},t.name)))),
+      el('div',{class:'xrow'},el('button',{class:'xb solid','data-next':'1',disabled:!cfg.topics.length,onclick:examStart},'Start the exam',el('small',{},cfg.n+' q · '+cfg.min+' min')),
+        last?el('span',{class:'xe'},'Last: '+last.pct+'% · best: '+best.pct+'%'):null));
+    if(D.exams.length)body.append(el('div',{class:'xcard'},el('span',{class:'xe'},'Recent exams'),el('table',{},el('tr',{},el('th',{},'Date'),el('th',{},'Score'),el('th',{class:'hide-s'},'Questions'),el('th',{class:'hide-s'},'Time used')),
+      D.exams.slice(0,5).map(x=>el('tr',{},el('td',{},dstr(x.at)),el('td',{},x.pct+'%'),el('td',{class:'hide-s'},x.r+' / '+x.n),el('td',{class:'hide-s'},Math.ceil(x.used/60)+' of '+x.min+' min'))))))}
+  function examStart(){const ts=shuffle(TOPICS.filter(t=>cfg.topics.includes(t.id)));const qs=[],seen=new Set();
+    for(let i=0;qs.length<cfg.n&&i<cfg.n*8;i++){const t=ts[qs.length%ts.length],q=anyQ(t);if(seen.has(q.q))continue;seen.add(q.q);qs.push(q)}
+    E={qs:shuffle(qs),ans:qs.map(()=>null),i:0,start:Date.now(),end:Date.now()+cfg.min*60000,min:cfg.min,done:false};
+    E.order=E.qs.map(q=>shuffle(q.o.map((_,i)=>i)));examTick();examView()}
+  function examTick(){if(!E||E.done)return;const left=Math.max(0,E.end-Date.now()),t=document.getElementById('xpT');
+    if(t){const s=Math.ceil(left/1000);t.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');t.classList.toggle('low',left<60000)}
+    if(left<=0){examSubmit(true);return}E.timer=setTimeout(examTick,250)}
+  function examView(){const q=E.qs[E.i],n=E.qs.length,left=E.qs.filter((_,i)=>E.ans[i]==null).length;body.innerHTML='';
+    body.append(el('div',{class:'xrow',style:'justify-content:space-between;margin-top:0'},el('span',{class:'xe'},'Question '+(E.i+1)+' of '+n+' · '+T(q._t).name),el('span',{class:'xtimer',id:'xpT',role:'timer','aria-label':'time left'},'')),
+      el('div',{class:'xcard'},el('div',{class:'xq',html:fmt(q.q)}),options(q,E.order[E.i],oi=>{E.ans[E.i]=oi;if(E.i<n-1)E.i++;examView()},E.ans[E.i])),
+      el('div',{class:'xpal',role:'group','aria-label':'Jump to question'},E.qs.map((_,i)=>el('button',{class:(E.ans[i]!=null?'done':'')+(i===E.i?' cur':''),'aria-label':'Question '+(i+1),onclick:()=>{E.i=i;examView()}},String(i+1)))),
+      el('div',{class:'xnav'},el('div',{class:'xrow',style:'margin:0'},el('button',{class:'xb',disabled:E.i===0,onclick:()=>{E.i--;examView()}},'← Previous'),el('button',{class:'xb','data-next':'1',disabled:E.i===n-1,onclick:()=>{E.i++;examView()}},'Next →')),
+        el('button',{class:'xb solid',onclick:()=>{if(left&&!confirm(left+' question'+(left===1?' is':'s are')+' unanswered. Submit anyway?'))return;examSubmit(false)}},'Submit',el('small',{},(n-left)+' / '+n+' answered'))));
+    const s=Math.ceil(Math.max(0,E.end-Date.now())/1000),t=document.getElementById('xpT');t.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');t.classList.toggle('low',s<60)}
+  function examSubmit(timeUp){clearTimeout(E.timer);E.done=true;const by={};let r=0;
+    E.qs.forEach((q,i)=>{const ok=E.ans[i]===0;if(ok)r++;const b=by[q._t]||(by[q._t]=[0,0]);b[1]++;if(ok)b[0]++;rec(q._t,q,ok)});
+    const n=E.qs.length,used=Math.min(E.min*60,Math.round((Date.now()-E.start)/1000));
+    const x={at:Date.now(),n,r,pct:pct(r,n),min:E.min,used,by};D.exams.unshift(x);D.exams=D.exams.slice(0,12);sv();
+    body.innerHTML='';tabs();
+    const weak=Object.entries(by).filter(([,b])=>b[0]/b[1]<.6).map(([id])=>T(id).name);
+    body.append(el('span',{class:'xe'},(timeUp?'Time is up · ':'')+'Exam results'),el('div',{class:'xbig'},x.pct+'%'),
+      el('p',{},`${r} of ${n} correct in ${Math.floor(used/60)} min ${used%60} s. `+(weak.length?'Worth another look: '+weak.join(', ')+'.':'No weak spots in this exam.')),
+      el('div',{class:'xcard'},el('span',{class:'xe'},'By topic'),el('table',{},el('tr',{},el('th',{},'Topic'),el('th',{},'Score'),el('th',{},'')),
+        TOPICS.filter(t=>by[t.id]).map(t=>{const b=by[t.id];return el('tr',{},el('td',{},t.name),el('td',{},b[0]+' / '+b[1]),el('td',{style:'width:40%'},el('div',{class:'xbarv'},el('i',{style:`width:${pct(b[0],b[1])}%`}))))}))),
+      el('span',{class:'xe'},'Review your answers'),
+      el('div',{style:'margin-top:8px'},E.qs.map((q,i)=>{const a=E.ans[i],ok=a===0;return el('details',{},el('summary',{},el('b',{class:ok?'ok':'no'},ok?'✓ ':'✗ '),'Q'+(i+1)+' · ',el('span',{html:fmt(q.q)})),
+        el('p',{html:'<b>Your answer:</b> '+(a==null?'<i>no answer</i>':fmt(q.o[a]))}),ok?null:el('p',{html:'<b>Correct:</b> '+fmt(q.o[0])}),q.w?el('p',{html:fmt(q.w)}):null)})),
+      el('div',{class:'xrow',style:'margin-top:18px'},el('button',{class:'xb solid',onclick:()=>{E=null;go('exam')}},'New exam'),
+        missCount()?el('button',{class:'xb',onclick:()=>go('review')},'Review mistakes',el('small',{},String(missCount()))):null,el('button',{class:'xb',onclick:()=>go('cert')},'Certificate')));
+    window.bgFire&&window.bgFire(x.pct>=80?3:1)}
+
+  /* mistakes review */
+  function reviewStart(){const ks=Object.keys(D.miss).filter(k=>T(k.split('|')[0])).sort((a,b)=>D.miss[b].n-D.miss[a].n||D.miss[b].at-D.miss[a].at);
+    body.append(el('span',{class:'xe'},'Mistakes review'));
+    if(!ks.length){body.append(el('h3',{},'Nothing to review'),el('p',{},'Every question you miss, in the game or in an exam, is saved here. You then get a fresh version of the same kind of question until you get it right.'),
+      el('div',{class:'xrow'},el('button',{class:'xb solid',onclick:()=>go('exam')},'Take an exam')));return}
+    const by={};ks.forEach(k=>{const t=k.split('|')[0];by[t]=(by[t]||0)+1});
+    body.append(el('h3',{},ks.length+' question type'+(ks.length===1?'':'s')+' to clear'),
+      el('p',{},'Each one is a fresh version of a question you missed: new numbers where the question is generated, the same question with shuffled answers where it is hand-written. Get it right once to clear it. The most-missed come first.'),
+      el('div',{class:'xcard'},el('table',{},TOPICS.filter(t=>by[t.id]).map(t=>el('tr',{},el('td',{},t.name),el('td',{},by[t.id]+' to clear'))))),
+      el('div',{class:'xrow'},el('button',{class:'xb solid','data-next':'1',onclick:()=>{R={ks:ks.slice(0,10),i:0,cleared:0};reviewItem()}},'Start review',el('small',{},Math.min(10,ks.length)+' questions'))))}
+  function freshFor(k){const[tid,kind]=k.split('|'),t=T(tid);
+    if(kind[0]==='g'&&t.gen&&t.gen[+kind.slice(1)])return gq(t,+kind.slice(1));
+    if(kind[0]==='h'&&t.qs[+kind.slice(1)])return hq(t,+kind.slice(1));
+    return t.gen&&t.gen.length?gq(t,rnd(0,t.gen.length-1)):hq(t,rnd(0,t.qs.length-1))}
+  function reviewItem(){const k=R.ks[R.i],q=freshFor(k),order=shuffle(q.o.map((_,i)=>i)),m=D.miss[k];body.innerHTML='';tabs();
+    const card=el('div',{class:'xcard'});
+    body.append(el('div',{class:'xrow',style:'justify-content:space-between;margin-top:0'},el('span',{class:'xe'},'Review '+(R.i+1)+' of '+R.ks.length+' · '+T(q._t).name),el('span',{class:'xe'},'missed '+m.n+'×')),card);
+    card.append(el('div',{class:'xq',html:fmt(q.q)}));
+    const box=options(q,order,oi=>{const ok=oi===0;[...box.children].forEach(b=>{b.disabled=true;const i=+b.dataset.i;if(i===0)b.classList.add('right');else if(i===oi)b.classList.add('wrong');else b.classList.add('dim')});
+      const t=D.tally[q._t]||(D.tally[q._t]={a:0,r:0});t.a++;if(ok){t.r++;delete D.miss[k];R.cleared++}else{m.n=Math.min(3,m.n+1);m.at=Date.now()}sv();tabs();
+      const last=R.i>=R.ks.length-1;
+      card.append(el('div',{class:'xfb'+(ok?'':' bad')},el('b',{},ok?'Cleared.':'Not yet. It stays on your list.'),el('span',{html:fmt(q.w||'')})),
+        el('div',{class:'xrow',style:'justify-content:flex-end;margin-bottom:0'},el('button',{class:'xb solid','data-next':'1',onclick:()=>{if(last)reviewDone();else{R.i++;reviewItem()}}},last?'See summary':'Next',el('small',{},'↵'))));
+      window.bgFire&&window.bgFire(ok?1:.25)});
+    card.append(box)}
+  function reviewDone(){body.innerHTML='';const left=missCount();
+    body.append(el('span',{class:'xe'},'Mistakes review'),el('div',{class:'xbig'},R.cleared+' / '+R.ks.length),
+      el('p',{},'cleared this round. '+(left?left+' question type'+(left===1?'':'s')+' still on your list.':'Your list is empty.')),
+      el('div',{class:'xrow'},left?el('button',{class:'xb solid',onclick:()=>go('review')},'Another round'):null,el('button',{class:'xb',onclick:()=>go('exam')},'Take an exam'),el('button',{class:'xb',onclick:close},'Back to the game')));R=null}
+
+  /* certificate */
+  function certView(){const info=(window.XP_INFO||(()=>({})))();
+    const inp=el('input',{class:'xin',id:'xpName',type:'text',maxlength:'60',placeholder:'Your full name',value:D.name,autocomplete:'name','aria-label':'Name on the certificate'});
+    const holder=el('div',{});
+    const draw=()=>{holder.innerHTML='';holder.append(certificate(info))};
+    inp.addEventListener('input',()=>{D.name=inp.value.trim();sv();draw()});
+    body.append(el('div',{class:'noprint'},el('span',{class:'xe'},'Certificate'),el('h3',{},'Your certificate'),
+      el('p',{},'Type your name, then print it or save it as a PDF (choose “Save as PDF” as the printer). Scores come from every question you have answered in this browser, plus your best exam. It becomes a Certificate of Completion once every topic has at least 5 answers at 60% or better.'),
+      el('div',{class:'xrow'},inp,el('button',{class:'xb solid',onclick:()=>{if(!D.name){inp.focus();inp.placeholder='Type your name first';return}window.print()}},'Print or save PDF'))),holder);draw()}
+  function certificate(info){let A=0,Rr=0;TOPICS.forEach(t=>{const x=D.tally[t.id];if(x){A+=x.a;Rr+=x.r}});
+    const best=D.exams.reduce((b,x)=>!b||x.pct>b.pct||(x.pct===b.pct&&x.n>b.n)?x:b,null);
+    const studied=TOPICS.filter(t=>D.tally[t.id]?.a).length;
+    const done=TOPICS.every(t=>{const x=D.tally[t.id];return x&&x.a>=5&&x.r/x.a>=.6});
+    const head=['Topic','Answered','Accuracy',''].concat(info.col?[info.col]:[]);
+    return el('div',{class:'cert'},el('div',{class:'fr'},
+      el('div',{class:'ce'},(info.game||'Discrete mathematics')+' · Discrete mathematics'),
+      el('h4',{},done?'Certificate of Completion':'Certificate of Progress'),
+      el('div',{class:'ce'},'awarded to'),el('div',{class:'nm'},D.name||'Your name'),
+      el('p',{},`for reasoning through ${A} discrete mathematics question${A===1?'':'s'} across ${studied} of ${TOPICS.length} topics, with ${pct(Rr,A)}% answered correctly.`+(best?` Best exam: ${best.pct}% (${best.r} of ${best.n} in ${best.min} minutes).`:'')+(info.line?' '+info.line:'')),
+      el('table',{},el('tr',{},head.map((h,i)=>el('th',{class:i===3?'hide-s':''},h))),TOPICS.map(t=>{const x=D.tally[t.id]||{a:0,r:0};return el('tr',{},el('td',{},t.name),el('td',{},String(x.a)),el('td',{},x.a?pct(x.r,x.a)+'%':'—'),el('td',{class:'hide-s',style:'width:26%'},el('div',{class:'xbarv'},el('i',{style:`width:${pct(x.r,x.a)}%`}))),info.col?el('td',{},info.cell(t)):null)})),
+      el('div',{class:'sig'},el('div',{},el('b',{},dstr(Date.now())),'Date'),el('div',{},el('b',{},'Moinuddeen'),'Author & project manager'),el('div',{},el('b',{},info.game||'Synapse'),'Made with Claude, an AI model by Anthropic'))))}
+
+  return{rec,open,close,isOpen,missCount,data:()=>D};
+})();
+window.XP=XP;
+{const n=document.getElementById('revN');if(n)n.textContent=XP.missCount()}
 
 /* ---------- background: grain, brain, network ---------- */
 (function(){
@@ -1254,7 +1666,7 @@ window.__game={layoutQ,S,get B(){return B},get R(){return R},get DLG(){return DL
     // signals
     if(!reduce&&t-lastSpawn>420){lastSpawn=t;spawn(0,Math.floor(Math.random()*layers[0].length))}
     if(!reduce&&t-lastWave>4200){lastWave=t;waves.push({o:P[Math.floor(Math.random()*P.length)],t0:now,amp:.35})}
-    for(let i=signals.length-1;i>=0;i--){const s=signals[i];s.t+=reduce?1:s.sp*1.6;const A=layers[s.li][s.a],Bn=layers[s.li+1][s.b];if(!A||!Bn){signals.splice(i,1);continue}const p=pos(A,t),q=pos(Bn,t);
+    for(let i=signals.length-1;i>=0;i--){const s=signals[i];s.t+=reduce?1:s.sp*1.6;const A=layers[s.li]?.[s.a],Bn=layers[s.li+1]?.[s.b];if(!A||!Bn){signals.splice(i,1);continue}const p=pos(A,t),q=pos(Bn,t);
       if(s.t>=1){Bn.fl=1;signals.splice(i,1);if(Math.random()<.82)spawn(s.li+1,s.b);if(Math.random()<.25)spawn(s.li+1,s.b);continue}
       const x=p[0]+(q[0]-p[0])*s.t,y=p[1]+(q[1]-p[1])*s.t,tx=p[0]+(q[0]-p[0])*Math.max(0,s.t-.12),ty=p[1]+(q[1]-p[1])*Math.max(0,s.t-.12);
       const gr=ctx.createLinearGradient(tx,ty,x,y);gr.addColorStop(0,`rgba(${BONE},0)`);gr.addColorStop(1,`rgba(${BONE},.55)`);ctx.strokeStyle=gr;ctx.lineWidth=1.4*dpr;ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(x,y);ctx.stroke();
