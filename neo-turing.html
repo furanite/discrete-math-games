@@ -224,6 +224,18 @@ body.t-neon .pop button{color:#04121a}
 #title .btn.ghost:hover{background:rgba(236,231,220,.09)}
 #title .btn:focus-visible{outline-color:#ece7dc}
 body.t-tide .sound{background:rgba(12,12,11,.8);border-color:rgba(236,231,220,.3);color:#ece7dc}
+/* tutorial coach */
+.coach{margin:10px 16px 0;padding:12px 14px;border-radius:14px;background:rgba(255,181,71,.1);border:1.5px solid rgba(255,181,71,.6);color:#fff3dd;position:relative}
+.coach .ch{display:flex;align-items:center;gap:12px;justify-content:space-between}
+.coach .eb{color:#ffb547}
+.coach .dots{display:flex;gap:5px}.coach .dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,181,71,.25)}.coach .dots i.on{background:#ffb547}.coach .dots i.cur{background:#fff;box-shadow:0 0 0 2px #ffb547}
+.coach p{margin:6px 0 2px;font-size:15px;line-height:1.5}
+.coach .skip{background:none;border:0;padding:4px 0;font-family:var(--m);font-size:11px;letter-spacing:.14em;color:rgba(255,243,221,.65);text-decoration:underline}
+.coach-hi{animation:coachpulse 1.1s steps(2) infinite;outline:3px solid #ffb547!important;outline-offset:3px}
+@keyframes coachpulse{50%{outline-color:rgba(255,181,71,.2)}}
+.coachmark{animation:coachblink 1.1s steps(2) infinite}
+@keyframes coachblink{50%{opacity:.55}}
+@media (prefers-reduced-motion:reduce){.coach-hi,.coachmark{animation:none}}
 </style></head><body><canvas id="bg" aria-hidden="true"></canvas>
 <section id="title" class="screen">
   <div class="tcard">
@@ -233,7 +245,7 @@ body.t-tide .sound{background:rgba(12,12,11,.8);border-color:rgba(236,231,220,.3
     <div class="trow0"><button class="btn" id="startBtn">START ▸</button><button class="btn ghost" id="logBtn">REI’S LOGBOOK</button></div>
     <div class="dots3" aria-hidden="true"><i class="tide"></i><i class="lamp"></i><i class="neon"></i><span class="eb">Three districts · twelve gates</span></div>
   </div>
-  <div class="credit eb">Author &amp; project manager: Moinuddeen · Made by Claude, an AI model by Anthropic</div>
+  <div class="credit eb">Author &amp; project manager: Moinuddeen · Made by Claude, an AI model by Anthropic<br>Content follows MIT 18.404J (Sipser) and CMU 15-453</div>
 </section>
 <section id="talk" class="screen" hidden>
   <div class="scene" id="scene"></div>
@@ -250,7 +262,7 @@ body.t-tide .sound{background:rgba(12,12,11,.8);border-color:rgba(236,231,220,.3
   <div class="hud"><button class="btn ghost sm" id="pBack">◂ MAP</button><div class="htitle"><span class="eb" id="pDist"></span><h2 id="pName"></h2></div><span class="sp"></span>
     <div class="chip"><span class="eb">Alphabet</span><b id="pAlpha"></b></div><div class="chip"><span class="eb">States</span><b id="pStates"></b></div><div class="chip"><span class="eb">Fewest possible</span><b id="pBest"></b></div></div>
   <div class="pgrid">
-    <div class="box boardwrap"><div class="bh"><span class="eb" id="bLabel">Board · build the gate’s machine</span></div><svg id="board" role="application" aria-label="Automaton board"></svg><div class="hint-line" id="hintLine" aria-live="polite"></div><div class="tools" id="tools"></div></div>
+    <div class="box boardwrap"><div class="bh"><span class="eb" id="bLabel">Board · build the gate’s machine</span></div><div class="coach" id="coach" hidden aria-live="polite"></div><svg id="board" role="application" aria-label="Automaton board"></svg><div class="hint-line" id="hintLine" aria-live="polite"></div><div class="tools" id="tools"></div></div>
     <div class="box order" id="order"><span class="eb hot" id="oKind">Order</span><h3 id="oTitle"></h3><p class="why" id="oWhy"></p><span class="eb">Test tapes</span><div class="tests" id="tests"></div>
       <div class="orow"><button class="btn ghost sm" id="manBtn">MANUAL &amp; HINTS</button><button class="btn sm" id="proveBtn" hidden>IT CAN’T BE BUILT ▸</button></div></div>
   </div>
@@ -460,75 +472,75 @@ const LEVELS=[
    {who:'IMAI',t:'Tap an empty socket to place a state. Select a state to make it the start, make it accepting, or drag from it to another state to run a wire.',art:'gate'},
    {who:'UNIT-8',t:'▮ NO WIRE FOR A SYMBOL: I JAM. A JAM MEANS SHUT. ▮',art:'gate'}],
   hints:['Let the start state mean “the last symbol was not 1”. Add a second state meaning “the last symbol was 1”, and make it accepting.','From both states, reading 1 goes to the accepting state and reading 0 goes back to the start state.'],
-  log:'A finite automaton remembers only which state it is in. Two states are enough here: “the last symbol was 1” and “it was not”. Accepting states answer yes when the tape ends on them.'}),
+  log:'A DFA is a 5-tuple M = (Q, Σ, δ, q₀, F): a finite set of states Q, an alphabet Σ, a transition function δ: Q × Σ → Q, a start state q₀ and accepting states F ⊆ Q. Here Q = {q0, q1}, Σ = {0, 1}, F = {q1}. M accepts w = w₁…wₙ if there are states r₀, …, rₙ with r₀ = q₀, rᵢ = δ(rᵢ₋₁, wᵢ) and rₙ ∈ F. As a regular expression, this gate is (0∪1)*1.'}),
  L({id:'g2',d:'tide',name:'GATE 2',title:'Open when the signal has an even number of 1s',lang:s=>[...s].filter(c=>c==='1').length%2===0,best:2,max:6,
   tests:['','1','11','0110','1011','000'],
   why:'Zero 1s counts as even, so the empty signal ε must open the gate. That means the start state itself has to be accepting.',
   brief:[{who:'KAI',t:'Gate 2 keeps flickering.',art:'harbor'},{who:'IMAI',t:'It counts 1s: an even count opens it, an odd count keeps it shut. Zero counts as even.',art:'gate'},
    {who:'IMAI',t:'A finite machine can’t store a number. But it doesn’t need the number, only whether it is even or odd.',art:'lab'}],
   hints:['Use two states: EVEN (the start state, and accepting) and ODD.','Reading 0 changes nothing, so 0 loops on each state. Reading 1 flips between EVEN and ODD.'],
-  log:'States are memory. To decide parity you only need to remember even or odd, so two states are enough however long the signal is. Wires labelled 0 loop in place; wires labelled 1 flip.'}),
+  log:'Extend δ to whole strings: δ*(q, ε) = q and δ*(q, wa) = δ(δ*(q, w), a). The language of M is L(M) = {w | δ*(q₀, w) ∈ F}, and a language is regular if some DFA recognises it. Parity needs two states however long the signal is; as a regular expression, (0*10*1)*0*.'}),
  L({id:'g3',d:'tide',name:'GATE 3',title:'Open if the signal contains 01 anywhere',lang:s=>s.includes('01'),best:3,max:6,
   tests:['01','10','0001','1110','1001','','0'],
   why:'Once 01 has appeared, the answer can never change back. That calls for a trap state: accepting, with both symbols looping on itself.',
   brief:[{who:'IMAI',t:'Gate 3 watches for the pattern 01 anywhere in the signal.',art:'gate'},{who:'KAI',t:'Anywhere? Then once it has seen 01, it should never forget.',art:'harbor'},{who:'IMAI',t:'Exactly. Give it a state it can’t leave.',art:'lab'}],
   hints:['Three states: “nothing yet”, “just saw a 0”, and “found 01”.','Start: 1 loops, 0 goes to “saw 0”. “Saw 0”: 0 loops, 1 goes to “found”. “Found” is accepting and loops on both 0 and 1.'],
-  log:'To spot a pattern, let each state record how much of it you have matched so far. After a full match, a trap state keeps accepting. This progress-tracking idea works for any fixed pattern.'}),
+  log:'To spot a pattern, let each state record how much of it has been matched so far; after a full match, an accepting sink keeps accepting. The same idea builds a DFA for any fixed substring, such as aba in the CMU 15-453 examples, or (0∪1)*01(0∪1)* here.'}),
  L({id:'g4',d:'tide',name:'GATE 4',title:'Open when the length is a multiple of 3',lang:s=>s.length%3===0,best:3,max:6,
   tests:['','0','01','010','111111','1101'],
   why:'Here the symbols don’t matter at all, only how many have been read. Count the length modulo 3.',
   brief:[{who:'IMAI',t:'The last harbour gate pulses in threes. It opens for signals of length 0, 3, 6, and so on.',art:'gate'},{who:'UNIT-8',t:'▮ COUNTING TO 3 AND STARTING AGAIN. FAMILIAR. ▮',art:'gate'}],
   hints:['Three states in a ring: length ≡ 0, 1 and 2 (mod 3). The ≡ 0 state is the start and is accepting.','Every symbol, 0 or 1, moves one step around the ring: 0 → 1 → 2 → 0.'],
-  log:'A cycle of k states counts modulo k. Both symbols follow the same wire, so the machine ignores what it reads and only tracks how much it has read.'}),
+  log:'A cycle of k states counts modulo k. Here every symbol moves one step, so the machine tracks |w| mod 3. Change which symbols move and which loop, and the same ring counts something else, such as the number of 1s mod 3.'}),
  L({id:'g5',d:'lamp',name:'GATE 5',title:'Open when the signal, read as a binary number, is divisible by 3',lang:s=>parseInt(s||'0',2)%3===0,best:3,max:6,
   tests:['','0','11','110','101','1001','111'],
   why:'Read the signal as a binary number, most significant bit first. The empty signal counts as 0, which is divisible by 3. Each new bit b turns the number n into 2n + b.',
   brief:[{who:'IMAI',t:'This exchange gate reads signals as binary numbers and opens for multiples of 3.',art:'lamp'},{who:'KAI',t:'The numbers can be huge.',art:'lamp'},{who:'IMAI',t:'Then don’t keep the number. Keep its remainder. Each tube can hold one remainder: 0, 1 or 2.',art:'paper'}],
   hints:['Three states, one per remainder r = 0, 1, 2. The start state is r = 0, and it is the only accepting state.','Reading bit b sends remainder r to (2r + b) mod 3. So from 0: 0→0, 1→1. From 1: 0→2, 1→0. From 2: 0→1, 1→2.'],
-  log:'Modular arithmetic makes huge numbers finite. If n leaves remainder r, then 2n + b leaves remainder (2r + b) mod 3. The machine updates the remainder and never needs the number itself.'}),
+  log:'If n leaves remainder r, then 2n + b leaves remainder (2r + b) mod 3, so δ(r, b) = (2r + b) mod 3. The machine never stores the number. Eliminating its states one at a time (the GNFA method, next district) turns it into the regular expression (0 ∪ 1(01*0)*1)*.'}),
  L({id:'g6',d:'lamp',name:'GATE 6',title:'Open unless the signal has two 1s in a row',lang:s=>!s.includes('11'),best:2,max:6,
   tests:['','1','11','1010','0110','10001'],
   why:'This gate forbids a pattern instead of requiring one. Every signal is fine until 11 appears; after that it must stay shut forever.',
   brief:[{who:'IMAI',t:'The switchboard overheats if two 1s arrive back to back. This gate keeps those signals out.',art:'lamp'},{who:'UNIT-8',t:'▮ A MISSING WIRE MAKES ME JAM. A JAM IS A SHUT GATE. USEFUL. ▮',art:'paper'}],
   hints:['Two accepting states: “last symbol was not 1” (the start) and “last symbol was 1”.','From “last was 1”, give it no wire for 1: UNIT-8 jams and the gate stays shut. Reading 0 always returns to the start.'],
-  log:'A forbidden pattern is the complement of a required one: swap accepting and rejecting states of a complete machine. A missing wire acts like a dead state that rejects everything, so it saves a tube.'}),
+  log:'Regular languages are closed under complement: in a complete DFA, swap F with Q − F. This gate is the complement of “contains 11”. A missing wire acts like a dead state that rejects everything, so it saves a tube. As a regular expression: (0 ∪ 10)*(ε ∪ 1).'}),
  L({id:'g7',d:'lamp',name:'GATE 7',title:'Open when there is an even number of 0s and an odd number of 1s',lang:s=>{const z=[...s].filter(c=>c==='0').length;return z%2===0&&(s.length-z)%2===1},best:4,max:8,
   tests:['1','','001','01','0101','10011','111'],
   why:'Two conditions must hold at once. Track both parities together: (0s even or odd) × (1s even or odd) gives four combinations.',
   brief:[{who:'IMAI',t:'Two old lines feed this gate. It needs an even count of 0s and an odd count of 1s, at the same time.',art:'paper'},{who:'KAI',t:'Two parity gates, stacked into one?',art:'lamp'},{who:'IMAI',t:'Exactly. Each tube remembers a pair of facts.',art:'lamp'}],
   hints:['Four states: (even 0s, even 1s) is the start; (even 0s, odd 1s) is the only accepting state.','Reading 0 flips the first parity and keeps the second; reading 1 keeps the first and flips the second.'],
-  log:'The product construction: to check two conditions, run both machines side by side. A state is a pair (state of machine A, state of machine B). With 2 × 2 states, this gate needs 4.'}),
+  log:'The product construction runs two DFAs side by side: Q = Q₁ × Q₂, start (q₁, q₂), δ((p, q), a) = (δ₁(p, a), δ₂(q, a)). For intersection, F = {(p, q) | p ∈ F₁ and q ∈ F₂}. Change F to “p ∈ F₁ or q ∈ F₂” for union, or “p ∈ F₁ and q ∉ F₂” for difference. So regular languages are closed under all three.'}),
  L({id:'g8',d:'lamp',name:'GATE 8',title:'Open when the signal starts and ends with the same symbol',lang:s=>s.length>0&&s[0]===s[s.length-1],best:5,max:8,
   tests:['','0','1','01','010','1001','1100'],
   why:'The machine must remember the first symbol for the whole run, and also what the latest symbol was. The empty signal has no first symbol, so it stays shut.',
   brief:[{who:'REI',t:'Logbook: the last exchange gate. It must remember how a signal began until the very end.',art:'paper'},{who:'IMAI',t:'Two branches, one for each first symbol. After that, each branch tracks the last symbol it read.',art:'lamp'}],
   hints:['A start state, then two branches: “began with 0” and “began with 1”. Each branch has two states: last symbol matches the first (accepting), or not.','Began with 0: in the branch, 0 goes to “last was 0” (accepting), 1 goes to “last was 1” (not accepting). Mirror it for the 1 branch.'],
-  log:'Some information has to be kept for the whole signal: here, the first symbol. The branches never meet again, so the machine needs 1 + 2 + 2 = 5 states, and no smaller machine works.'}),
+  log:'Why can’t 4 states work? The prefixes ε, 0, 01, 1 and 10 are pairwise distinguishable: for each pair some suffix z makes one accepted and the other rejected. A DFA must send distinguishable strings to different states, so it needs at least 5 (the Myhill–Nerode idea behind DFA minimisation). As a regular expression: 0(0∪1)*0 ∪ 1(0∪1)*1 ∪ 0 ∪ 1.'}),
  L({id:'g9',d:'neon',nfa:1,name:'GATE 9',title:'Open when the third symbol from the end is 1',lang:s=>s.length>=3&&s[s.length-3]==='1',best:4,max:8,
   tests:['100','000','1','0110','11011','0101'],
   why:'Nondeterminism lets UNIT-8 guess. A copy waits on the start state, and whenever it reads a 1 it may also guess “this is the third from the end” and run on to check exactly two more symbols.',
   brief:[{who:'UNIT-8',t:'▮ SPLIT MODE ENABLED. A STATE MAY HAVE SEVERAL WIRES FOR ONE SYMBOL. ▮',art:'chip'},{who:'IMAI',t:'A deterministic machine needs 8 states for this gate. With guessing, 4 are enough.',art:'neon'}],
   hints:['Four states in a line: wait → saw 1 → one more → two more (accepting). The wait state loops on both 0 and 1.','From wait, 1 also goes to “saw 1”. Then any symbol moves one step along the line. The last state has no outgoing wires.'],
-  log:'An NFA can be in several states at once. It accepts if any path ends on an accepting state. Every NFA can be turned into a DFA by tracking sets of states (the subset construction), but the DFA can be exponentially bigger: here 8 states instead of 4.'}),
+  log:'An NFA has δ: Q × Σ_ε → P(Q): each state and symbol (or ε) gives a set of next states, and it accepts if some branch ends in F. The subset construction turns it into a DFA with states P(Q), δ′(R, a) = E(⋃_{r∈R} δ(r, a)) where E adds the states reachable by ε-moves, start E({q₀}), and accepting sets R with R ∩ F ≠ ∅. Here the DFA needs 8 states: the 8 possible last-three-symbol strings are pairwise distinguishable.'}),
  L({id:'g10',d:'neon',nfa:1,name:'GATE 10',title:'Match the pattern (01)*',lang:s=>/^(01)*$/.test(s),best:2,max:8,
   tests:['','01','0101','0','10','011','010101'],
   why:'A regular expression describes a language. (01)* means: the block 01, repeated any number of times, including zero times. So ε, 01, 0101, … open the gate.',
   brief:[{who:'HALT',t:'▮▮ PATTERN ( 0 1 ) * . READING. ▮▮',art:'core'},{who:'IMAI',t:'The core writes its orders as regular expressions. The star means “repeat any number of times, even none”.',art:'neon'}],
   hints:['Two states: the start (accepting) and “read the 0, waiting for its 1”.','Start: 0 goes to the waiting state. Waiting: 1 goes back to the start. Leave every other wire out so wrong signals jam.'],
-  log:'Kleene’s theorem: regular expressions and finite automata describe exactly the same languages. A star becomes a loop back to an accepting start; a concatenation becomes states in sequence.'}),
- L({id:'g11',d:'neon',nfa:1,name:'GATE 11',title:'Match the pattern (0|1)*(00|11)',lang:s=>/(00|11)$/.test(s),best:4,max:8,
+  log:'Regular expressions are built from ∅, ε and single symbols with union R₁ ∪ R₂, concatenation R₁R₂ and star R*. Star binds tightest, then concatenation, then union. Kleene’s theorem: a language is regular iff some regular expression describes it. For R → NFA, union adds a new start with ε-moves into both machines, concatenation links the first machine’s accepting states to the second’s start by ε-moves, and star adds a new accepting start plus ε-moves from the accepting states back to the old start.'}),
+ L({id:'g11',d:'neon',nfa:1,name:'GATE 11',title:'Match the pattern (0∪1)*(00∪11)',lang:s=>/(00|11)$/.test(s),best:4,max:8,
   tests:['00','11','01','100','0011','010','1'],
-  why:'(0|1)* is any signal at all; (00|11) is a double symbol. Together: the signal ends with 00 or 11. The bar | means “or”.',
-  brief:[{who:'HALT',t:'▮▮ PATTERN ( 0 | 1 ) * ( 0 0 | 1 1 ). READING. READING. ▮▮',art:'core'},{who:'KAI',t:'Any signal, then a double at the end.',art:'neon'},{who:'UNIT-8',t:'▮ I CAN GUESS WHERE THE DOUBLE STARTS. ▮',art:'chip'}],
+  why:'(0∪1)* is any signal at all; (00∪11) is a double symbol. Together: the signal ends with 00 or 11. The union symbol ∪ means “or”.',
+  brief:[{who:'HALT',t:'▮▮ PATTERN ( 0 ∪ 1 ) * ( 0 0 ∪ 1 1 ). READING. READING. ▮▮',art:'core'},{who:'KAI',t:'Any signal, then a double at the end.',art:'neon'},{who:'UNIT-8',t:'▮ I CAN GUESS WHERE THE DOUBLE STARTS. ▮',art:'chip'}],
   hints:['An NFA with 4 states: start, “saw a 0”, “saw a 1”, and a final accepting state. The start loops on 0 and 1.','Start on 0 also goes to “saw a 0”, on 1 also to “saw a 1”. “Saw a 0” goes to the final state on 0; “saw a 1” goes there on 1.'],
-  log:'The union (00|11) becomes two branches out of the same state; nondeterminism lets the machine try both. Building NFAs from regular expressions piece by piece is called Thompson’s construction.'}),
+  log:'Union in a regular expression becomes nondeterministic branching. For the other direction, FA → regular expression, turn the machine into a GNFA, whose wires carry regular expressions. Rip out states one at a time: the wire from qᵢ to qⱼ becomes R(qᵢ,qⱼ) ∪ R(qᵢ,q_rip) R(q_rip,q_rip)* R(q_rip,qⱼ). Stop when only the start and accept remain.'}),
  L({id:'g12',d:'neon',nfa:1,proof:1,name:'THE CORE LOCK',title:'Open only for 0ⁿ1ⁿ: some 0s, then exactly as many 1s',lang:s=>{const m=s.match(/^(0*)(1*)$/);return!!m&&m[1].length===m[2].length},best:'none',max:8,
   tests:['','01','0011','000111','001','10','0101'],
   why:'Try to build it. If every machine you build fails, think about why: how many zeros can a machine with 8 states keep track of? When you know, press IT CAN’T BE BUILT.',
   brief:[{who:'HALT',t:'▮▮ THE LOCK OPENS ONLY FOR 0ⁿ1ⁿ. SOME ZEROS, THEN EXACTLY AS MANY ONES. BUILD ITS MACHINE. ▮▮',art:'core'},
    {who:'REI',t:'Logbook, last page. If you are reading this, you have reached my lock. I built it so that nobody could pass by building. Only by proving.',art:'paper'},{who:'KAI',t:'Then let’s see what a machine can and can’t do.',art:'neon'}],
   hints:['Count how many different numbers of zeros the machine must tell apart. After 0, 00, 000, … it must know how many 1s to expect.','A machine with p states can’t tell p + 1 different counts apart: two of them must land on the same state.'],
-  log:'The pumping lemma: if a machine with p states accepts 0ᵖ1ᵖ, then while reading the zeros some state repeats, so a loop of k ≥ 1 zeros can be run again. The machine then also accepts 0ᵖ⁺ᵏ1ᵖ, which is wrong. So 0ⁿ1ⁿ is not regular: no finite automaton recognises it.'})
+  log:'Pumping lemma: if A is regular, there is a pumping length p such that every s ∈ A with |s| ≥ p splits as s = xyz with xyⁱz ∈ A for every i ≥ 0, |y| > 0 and |xy| ≤ p. For 0ⁿ1ⁿ, take s = 0ᵖ1ᵖ. Since |xy| ≤ p, y is all 0s, so xyyz has more 0s than 1s, which is a contradiction. Think of it as a game: the opponent picks p, you pick s, the opponent splits it, you pick i. So 0ⁿ1ⁿ is not regular.'})
 ];
 LEVELS.forEach((g,i)=>{g.idx=i;g.alpha=['0','1'];g.tests=g.tests.map(s=>[s,g.lang(s)?1:0])});
 
@@ -575,7 +587,7 @@ function renderMap(just){setTheme('tide');const D=$('#districts');D.innerHTML=''
   if(just)SND.rise()}
 function openLog(){const m=$('#mcard');m.innerHTML='';const box=el('div',{class:'log'});
   LEVELS.forEach(g=>{const d=SAVE.done[g.id];box.append(el('div',{class:'ent'+(d?'':' locked')},el('b',{},g.name+' · '+DISTRICTS.find(x=>x.id===g.d).name),el('p',{},d?g.log:'Repair this gate to unlock this page.')))});
-  m.append(el('span',{class:'eb'},'Rei’s logbook'),el('h3',{},'WHAT THE GATES TEACH'),el('p',{},'One page for each gate you repair. Together they cover deterministic and nondeterministic finite automata, regular expressions, and the limits of finite machines.'),box,
+  m.append(el('span',{class:'eb'},'Rei’s logbook'),el('h3',{},'WHAT THE GATES TEACH'),el('p',{},'One page for each gate you repair. Together they cover deterministic and nondeterministic finite automata, closure properties, regular expressions, and the limits of finite machines. The definitions follow MIT 18.404J Theory of Computation (Sipser, lectures 1–3) and CMU 15-453 Formal Languages, Automata and Computation (lectures 2–5).'),box,
     el('div',{class:'row'},el('button',{class:'btn sm',onclick:()=>{$('#modal').hidden=true}},'CLOSE')));$('#modal').hidden=false}
 
 /* ---------- board model ---------- */
@@ -591,7 +603,7 @@ function saveBoard(){SAVE.boards[LV.id]=BD;persist()}
 function newId(){let k=0;while(BD.states.some(s=>s.id===k))k++;return k}
 const blank=()=>({states:[{id:0,c:1,r:2,acc:false}],start:0,trans:{}});
 function openLevel(i){const g=LEVELS[i];
-  const go=()=>{LV=g;setTheme(g.d);BD=SAVE.boards[g.id]?JSON.parse(JSON.stringify(SAVE.boards[g.id])):blank();UNDO=[];SEL=null;MODE='place';LV.extra=[];LV.inspected=0;setupPuzzle();show('puzzle')};
+  const go=()=>{LV=g;setTheme(g.d);BD=SAVE.boards[g.id]?JSON.parse(JSON.stringify(SAVE.boards[g.id])):blank();UNDO=[];SEL=null;MODE='place';LV.extra=[];LV.inspected=0;TUT=null;$('#coach').hidden=true;setupPuzzle();show('puzzle');if(g.id==='g1'&&!SAVE.tut&&!SAVE.done.g1)tutStart()};
   const brief=()=>{if(!SAVE.seen[g.id]){SAVE.seen[g.id]=1;persist();setTheme(g.d);talk(g.brief,go)}else go()};
   shut(()=>{if(g.d!=='tide'&&!SAVE.dseen[g.d]){SAVE.dseen[g.d]=1;persist();setTheme(g.d);talk(STORY[g.d],()=>{if(!SAVE.seen[g.id]){SAVE.seen[g.id]=1;persist();talk(g.brief,go)}else go()})}else brief()})}
 
@@ -647,7 +659,7 @@ function render(){const s=$('#board'),K=LOOK[LV.d];s.innerHTML='';s.setAttribute
     K.state(g,st,x,y,SEL===st.id);
     if(SEL===st.id)sv('circle',{cx:x,cy:y,r:SR+10,fill:'none',stroke:K.token,'stroke-width':1.5,'stroke-dasharray':'5 5'},g)}
   sv('g',{id:'toks',style:'pointer-events:none'},s);
-  counts();renderTools()}
+  tutMark(s);counts();renderTools();tutUpdate()}
 function wirePath(A,B,bend){const x1=cx(A),y1=cy(A),x2=cx(B),y2=cy(B);
   if(A===B){const d=`M${x1-13} ${y1-SR+2} C${x1-48} ${y1-90} ${x1+48} ${y1-90} ${x1+13} ${y1-SR+1}`;return{d,lx:x1,ly:y1-70}}
   const dx=x2-x1,dy=y2-y1,Ln=Math.hypot(dx,dy),nx=-dy/Ln,ny=dx/Ln,off=bend?30:0,mx=(x1+x2)/2+nx*off,my=(y1+y2)/2+ny*off;
@@ -699,7 +711,7 @@ function pickSymbol(A,B,e){SEL=A.id;MODE='place';
       if(LV.nfa){if(!cur.includes(B.id))BD.trans[k]=cur.concat(B.id);if(cur.length&&!cur.includes(B.id))note=`${nameOf(A)} now has ${cur.length+1} wires on ${a}. UNIT-8 will split here.`}
       else{if(cur.length&&cur[0]!==B.id)note=`Rewired: ${nameOf(A)} on ${a} now goes to ${nameOf(B)}. Outside the core, each state has at most one wire per symbol.`;BD.trans[k]=[B.id]}
       closePop();SND.wire();setHint(note);changed()}},a)}),
-    el('button',{class:'x',onclick:()=>{closePop();render()}},'✕')])}
+    el('button',{class:'x',onclick:()=>{closePop();render()}},'✕')]);tutUpdate()}
 function wireMenu(f,to,e){const syms=LV.alpha.filter(a=>tgts(f,a).includes(to));
   popAt(e,[el('span',{class:'eb'},'cut wire'),...syms.map(a=>el('button',{onclick:()=>{snapshot();const k=f+':'+a;BD.trans[k]=tgts(f,a).filter(t=>t!==to);if(!BD.trans[k].length)delete BD.trans[k];closePop();SND.del();changed()}},'✕ '+a)),el('button',{class:'x',onclick:closePop},'keep')])}
 
@@ -745,7 +757,7 @@ async function runAll(){if(RUN){RUN.stop=true;return}SND.wake();closePop();
   if(bad!==undefined){LV.extra.push([bad,LV.lang(bad)?1:0]);renderTests();SND.bad();toast('INSPECTOR: COUNTEREXAMPLE FOUND');
     setHint(`The inspector found a signal your machine gets wrong: ${shown(bad)} should ${LV.lang(bad)?'OPEN':'stay SHUT'}. It has been added to the tapes.`+(LV.proof&&LV.inspected>=1?' Every machine fails somewhere. Can you say why? Then press IT CAN’T BE BUILT.':''));return}
   solved()}
-function solved(stars){const n=BD.states.length;stars=stars||(n<=LV.best?3:n<=LV.best+1?2:1);const prev=SAVE.done[LV.id],first=!prev;
+function solved(stars){if(TUT)tutEnd(true);const n=BD.states.length;stars=stars||(n<=LV.best?3:n<=LV.best+1?2:1);const prev=SAVE.done[LV.id],first=!prev;
   SAVE.done[LV.id]={stars:Math.max(stars,prev?.stars||0),states:LV.proof?0:Math.min(n,prev?.states||99)};persist();SND.ok();
   const m=$('#mcard');m.innerHTML='';
   m.append(el('span',{class:'eb'},LV.name+' · '+DISTRICTS.find(x=>x.id===LV.d).name),el('h3',{},LV.proof?'LOCK OPENED':'GATE ONLINE'),el('div',{class:'stars','aria-label':stars+' of 3 stars'},[0,1,2].map(k=>el('i',{class:k<stars?'on':''},'★'))),
@@ -757,12 +769,12 @@ function backToMap(just){shut(()=>{if(just&&LV.proof&&!SAVE.ended){SAVE.ended=1;
   show('map');renderMap(just);const d=just&&LEVELS.find(g=>g.id===just)?.d;if(d&&d!=='neon'&&distDone(d))setTimeout(()=>toast((d==='tide'?'LAMP QUARTER':'NEON CORE')+' UNLOCKED'),500)})}
 function showManual(){const m=$('#mcard');m.innerHTML='';
   m.append(el('span',{class:'eb'},'Field manual · '+LV.name),el('h3',{},'HOW GATES THINK'),
-  LV.nfa?el('p',{},'In the core, gates are nondeterministic finite automata (NFAs). A state may have several wires for the same symbol, or none. UNIT-8 copies itself down every wire it can follow; a copy with no wire to follow disappears. When the tape ends, the gate opens if any copy stands on an accepting state.')
-   :el('p',{},'A gate is a deterministic finite automaton (DFA). It has states, one start state (the arrow in), some accepting states, and wires. Each wire is labelled with the symbols that follow it, and each state has at most one wire per symbol.'),
+  LV.nfa?el('p',{},'In the core, gates are nondeterministic finite automata (NFAs), N = (Q, Σ, δ, q₀, F) with δ: Q × Σ_ε → P(Q). A state may have several wires for the same symbol, or none. UNIT-8 copies itself down every wire it can follow; a copy with no wire to follow disappears. When the tape ends, the gate opens if any copy stands on an accepting state. (Textbook NFAs also allow ε-wires that move without reading; this board leaves them out.)')
+   :el('p',{},'A gate is a deterministic finite automaton (DFA), M = (Q, Σ, δ, q₀, F): states Q, the alphabet Σ = {0, 1}, a transition function δ (the wires), one start state q₀ (the arrow in) and accepting states F. Each wire is labelled with the symbols that follow it, and each state has at most one wire per symbol. A missing wire stands for a dead state, so δ is still a total function.'),
   el('p',{},'UNIT-8 reads the tape left to right, one symbol per step. If no wire fits, UNIT-8 jams and the signal is rejected. Your machine must be right for every signal, not just the test tapes: after the tapes pass, the inspector tries all '+allStrings(LV.alpha,8).length+' signals up to length 8.'),
   el('p',{},LV.d==='tide'?'Accepting states have a double ring.':LV.d==='lamp'?'Accepting tubes have an orange lamp and say ACCEPT. The lit digit shows where UNIT-8 is.':'Accepting chips have a green LED. A magenta outline shows where UNIT-8’s copies are.'),
   el('p',{class:'m'},'Hint 1: '+LV.hints[0]),el('details',{},el('summary',{class:'m',style:'cursor:pointer'},'Show hint 2'),el('p',{class:'m'},LV.hints[1])),
-  el('div',{class:'row'},el('button',{class:'btn sm',onclick:()=>{$('#modal').hidden=true}},'BACK TO THE BOARD')));$('#modal').hidden=false}
+  el('div',{class:'row'},LV.id==='g1'?el('button',{class:'btn ghost sm',onclick:()=>{$('#modal').hidden=true;snapshot();BD=blank();SEL=null;MODE='place';saveBoard();clearResults();tutStart();render()}},'REPLAY TUTORIAL'):null,el('button',{class:'btn sm',onclick:()=>{$('#modal').hidden=true}},'BACK TO THE BOARD')));$('#modal').hidden=false}
 
 /* ---------- the core lock: a guided proof that 0ⁿ1ⁿ is not regular ---------- */
 const PROOF=[
@@ -770,7 +782,9 @@ const PROOF=[
   w:['It must accept 0ᵖ1ᵖ, and its zeros are long enough to force the machine to repeat a state.','This signal isn’t of the form 0ⁿ1ⁿ, so the machine just rejects it. That tells us nothing.','The machine must reject this one, which proves nothing.','The machine must reject 0ᵖ, which it can easily do.']},
  {q:'While reading the first p zeros, UNIT-8 stands on p + 1 states (counting the start). What must happen?',o:['Some state is visited twice','Every state is visited exactly once','UNIT-8 jams','The gate opens early'],
   w:['Pigeonhole: p + 1 visits but only p states, so some state repeats.','There are p + 1 visits and only p states; they can’t all be different.','It can’t jam: the machine accepts 0ᵖ1ᵖ, so this run must continue to the end.','Whether the gate is open only matters at the end of the tape.']},
- {q:'Between the two visits UNIT-8 read k ≥ 1 zeros and came back to the same state. What happens if it goes round that loop one extra time?',o:['It still ends on an accepting state: the machine accepts 0ᵖ⁺ᵏ1ᵖ','It now rejects 0ᵖ1ᵖ','It accepts 0ᵖ1ᵖ⁺ᵏ','Nothing: the loop can only be run once'],
+ {q:'The pumping lemma writes s = xyz with |y| > 0 and |xy| ≤ p. For s = 0ᵖ1ᵖ, what can y contain?',o:['Only 0s','Only 1s','Some 0s and then some 1s','Possibly nothing'],
+  w:['Right. xy lies inside the first p symbols, and those are all 0s. So y is a block of k ≥ 1 zeros: the loop UNIT-8 ran between the two visits.','The 1s start after position p, but |xy| ≤ p, so y can’t reach them.','That would need |xy| > p, which the lemma rules out.','The lemma guarantees |y| > 0: the repeated state closes a loop of at least one symbol.']},
+ {q:'Between the two visits UNIT-8 read k ≥ 1 zeros and came back to the same state. What happens if it goes round that loop one extra time, that is, reads xyyz?',o:['It still ends on an accepting state: the machine accepts xyyz = 0ᵖ⁺ᵏ1ᵖ','It now rejects 0ᵖ1ᵖ','It accepts 0ᵖ1ᵖ⁺ᵏ','Nothing: the loop can only be run once'],
   w:['Right. After the loop UNIT-8 is back in the same state, so the rest of the run is identical and the gate opens.','The original signal is untouched; we are feeding a new, longer one.','The loop is made of zeros, so it adds zeros, not ones.','A machine has no memory of how often it went round a loop. That is exactly the weakness.']},
  {q:'Is 0ᵖ⁺ᵏ1ᵖ in the language 0ⁿ1ⁿ?',o:['No: it has more zeros than ones, so the machine is wrong','Yes, for every k','Only when k = p','It depends on the machine'],
   w:['Contradiction. So no machine with p states works, for any p: 0ⁿ1ⁿ is not regular.','It has p + k zeros but only p ones, and k ≥ 1.','Even then, 2p zeros and p ones don’t match.','The language is fixed. Every machine is wrong about this signal.']}];
@@ -781,6 +795,37 @@ function prove(){let i=0,wrong=0;const m=$('#mcard');
       else{wrong++;e.currentTarget.classList.add('wrong');e.currentTarget.disabled=true;SND.bad();fb.innerHTML='';fb.append(el('div',{class:'fb bad'},P.w[k]))}}},P.o[k]));
     m.append(...btns,fb,el('div',{class:'row'},el('button',{class:'btn ghost sm',onclick:()=>{$('#modal').hidden=true}},'BACK TO THE BOARD')));setTimeout(()=>btns[0].focus(),30)};
   step();$('#modal').hidden=false}
+
+/* ---------- tutorial: guides the first machine in gate 1, one action at a time ---------- */
+let TUT=null;
+const tq1=()=>BD.states.find(s=>s.id!==BD.start);
+const tq0=()=>byId(BD.start);
+const TSTEPS=[
+ {t:'Your board starts with one state, q0. The arrow marks it as the START state: UNIT-8 begins every signal here. Tap the glowing square to add a second state.',done:()=>!!tq1(),mark:'socket'},
+ {t:()=>`This new state, ${nameOf(tq1())}, will mean “the last symbol I read was 1”. Tap it to select it.`,done:()=>SEL===tq1()?.id||tq1()?.acc,mark:'q1'},
+ {t:()=>`Press ACCEPT. A double ring appears: if the signal ends while UNIT-8 stands on ${nameOf(tq1())}, the gate opens.`,done:()=>tq1()?.acc,btn:'ACCEPT'},
+ {t:()=>`Now the wires. Reading a 1 from ${nameOf(tq0())} should go to ${nameOf(tq1())}. Drag from ${nameOf(tq0())} to ${nameOf(tq1())}, then choose 1.`,done:()=>tgts(BD.start,'1').includes(tq1().id),wire:()=>[tq0(),tq1(),'1']},
+ {t:()=>`Reading a 0 from ${nameOf(tq0())} keeps the last symbol “not 1”, so it stays put. Drag out of ${nameOf(tq0())} and back onto it to make a loop, then choose 0.`,done:()=>tgts(BD.start,'0').includes(BD.start),wire:()=>[tq0(),tq0(),'0']},
+ {t:()=>`On ${nameOf(tq1())}, another 1 means the last symbol is still 1. Make a loop on ${nameOf(tq1())} and choose 1.`,done:()=>tgts(tq1().id,'1').includes(tq1().id),wire:()=>[tq1(),tq1(),'1']},
+ {t:()=>`Last wire: a 0 read on ${nameOf(tq1())} means the signal no longer ends in 1. Drag from ${nameOf(tq1())} back to ${nameOf(tq0())} and choose 0.`,done:()=>tgts(tq1().id,'0').includes(BD.start),wire:()=>[tq1(),tq0(),'0']},
+ {t:'Every state now has one wire for 0 and one for 1. Press RUN and watch UNIT-8 walk each test tape. Green rows pass.',done:()=>false,btn:'RUN'}];
+function tutStart(){TUT={k:0};$('#coach').hidden=false;render()}
+function tutEnd(done){if(!TUT)return;TUT=null;SAVE.tut=1;persist();$('#coach').hidden=true;document.querySelectorAll('.coach-hi').forEach(b=>b.classList.remove('coach-hi'));if(LV)render()}
+function tutStep(){let k=0;while(k<TSTEPS.length-1&&TSTEPS[k].done())k++;return k}
+function tutUpdate(){if(!TUT||!LV||LV.id!=='g1')return;const k=tutStep(),S=TSTEPS[k];TUT.k=k;
+  const c=$('#coach');c.innerHTML='';
+  c.append(el('div',{class:'ch'},el('span',{class:'eb'},`Tutorial · step ${k+1} of ${TSTEPS.length}`),el('span',{class:'dots'},TSTEPS.map((_,i)=>el('i',{class:i<k?'on':i===k?'cur':''})))),
+    el('p',{},typeof S.t==='function'?S.t():S.t),el('button',{class:'skip',onclick:()=>tutEnd(false)},'SKIP TUTORIAL'));
+  document.querySelectorAll('.coach-hi').forEach(b=>b.classList.remove('coach-hi'));
+  if(S.btn==='RUN')$('#runBtn').classList.add('coach-hi');
+  if(S.btn==='ACCEPT')[...document.querySelectorAll('#tools .tool')].find(b=>b.textContent.startsWith('ACCEPT'))?.classList.add('coach-hi');
+  const w=S.wire&&S.wire();if(w)document.querySelectorAll('.pop button').forEach(b=>{if(b.textContent===w[2])b.classList.add('coach-hi')})}
+function tutMark(s){if(!TUT||!LV||LV.id!=='g1')return;const S=TSTEPS[tutStep()],g=sv('g',{class:'coachmark',style:'pointer-events:none'},s);
+  if(S.mark==='socket'){const c=tutSocket();if(c)sv('rect',{x:c[0]*TS+3,y:c[1]*TS+3,width:TS-6,height:TS-6,rx:14,fill:'rgba(255,181,71,.12)',stroke:'#ffb547','stroke-width':3,'stroke-dasharray':'8 6'},g)}
+  if(S.mark==='q1'){const q=tq1();if(q)sv('circle',{cx:cx(q),cy:cy(q),r:SR+12,fill:'none',stroke:'#ffb547','stroke-width':3,'stroke-dasharray':'8 6'},g)}
+  const w=S.wire&&S.wire();if(w&&w[0]&&w[1]){const p=wirePath(w[0],w[1],false);sv('path',{d:p.d,fill:'none',stroke:'#ffb547','stroke-width':3,'stroke-dasharray':'4 8','stroke-linecap':'round'},g);
+    svt('text',{x:p.lx,y:p.ly-(w[0]===w[1]?14:18),'text-anchor':'middle',fill:'#ffb547','font-family':'JetBrains Mono','font-weight':700,'font-size':15},w[2]+'?',g)}}
+function tutSocket(){for(const[c,r]of[[3,2],[4,2],[3,1],[3,3],[5,2],[2,1]])if(!stateAt(c,r))return[c,r];return null}
 
 /* ---------- wiring up the page ---------- */
 function startGame(){SND.wake();SND.clack();shut(()=>{if(!SAVE.intro){SAVE.intro=1;persist();setTheme('tide');talk(STORY.intro,()=>{show('map');renderMap()})}else{show('map');renderMap()}})}
